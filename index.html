@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4.4.2/build/index.umd.min.js"></script>
     
-    <link rel="stylesheet" href="styles.css?v=1.6.5">
+    <link rel="stylesheet" href="styles.css?v=1.7.0">
 </head>
 <body>
     <div class="container">
@@ -82,7 +82,7 @@
                 <h2 id="modalTitle">Previsualización de Excel</h2>
                 <span class="close-btn" id="closeModalBtn">&times;</span>
             </div>
-            <p><strong>Comandos:</strong> Haz clic y arrastra. Usa <b>SHIFT + Clic</b> para rangos largos. Usa <b>CTRL + Clic</b> para agregar o quitar celdas individuales de tu selección actual.</p>
+            <p><strong>Comandos:</strong> Haz clic y arrastra. Usa <b>SHIFT + Clic</b> para rangos largos. Usa <b>CTRL + Clic</b> para agregar o quitar celdas individuales.</p>
             
             <div class="range-controls">
                 <button id="saveRangeBtn">Guardar Rango</button>
@@ -96,6 +96,18 @@
         </div>
     </div>
 
-    <script src="script.js?v=1.6.5"></script>
+    <div id="chartModal" class="modal hidden">
+        <div class="modal-content" style="max-height: 85vh; height: auto;">
+            <div class="modal-header">
+                <h2 id="chartModalTitle">Gráfico Estadístico</h2>
+                <span class="close-btn" id="closeChartModalBtn">&times;</span>
+            </div>
+            <div class="chart-modal-body">
+                <canvas id="modalCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=1.7.0"></script>
 </body>
 </html>
