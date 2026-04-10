@@ -32,29 +32,23 @@ h1, h2 {
 }
 
 .settings-panel {
-    margin: 15px 0;
-    padding: 15px;
+    margin: 15px 0; padding: 15px;
     border: 1px dashed var(--border-color);
     background-color: var(--bg-color);
 }
 
 .settings-panel label {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    cursor: pointer;
+    display: flex; align-items: center;
+    margin-bottom: 10px; cursor: pointer;
 }
 
 input[type="number"] {
-    margin-left: 10px;
-    padding: 5px;
-    width: 80px;
+    margin-left: 10px; padding: 5px; width: 80px;
     border: 1px solid var(--border-color);
 }
 
 input[type="number"]:disabled {
-    background-color: #e0e0e0;
-    cursor: not-allowed;
+    background-color: #e0e0e0; cursor: not-allowed;
 }
 
 input[type="file"] { margin-bottom: 15px; font-size: 16px; }
@@ -65,12 +59,9 @@ button {
     background-color: var(--text-color);
     color: var(--bg-color);
     border: 2px solid var(--border-color);
-    padding: 10px 20px;
-    font-size: 14px;
-    cursor: pointer;
-    text-transform: uppercase;
-    font-weight: bold;
-    transition: all 0.2s ease;
+    padding: 10px 20px; font-size: 14px;
+    cursor: pointer; text-transform: uppercase;
+    font-weight: bold; transition: all 0.2s ease;
     margin-right: 10px;
 }
 
@@ -92,6 +83,58 @@ tr:nth-child(even) { background-color: var(--hover-bg); }
     margin-top: 0; font-size: 14px; text-transform: uppercase;
     border-bottom: 1px solid var(--border-color); padding-bottom: 8px;
 }
-.stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+
+.stat-row { 
+    display: flex; justify-content: space-between; 
+    margin-bottom: 8px; font-size: 14px; align-items: center;
+}
 
 .hidden { display: none; }
+
+/* === NUEVO: SISTEMA DE TOOLTIPS PARA FÓRMULAS === */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted var(--text-color);
+    cursor: help; /* Cambia el cursor a un signo de interrogación */
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: max-content;
+    max-width: 280px;
+    background-color: #222;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 10;
+    bottom: 130%; /* Posicionado arriba del texto */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-family: 'Courier New', Courier, monospace; /* Fuente matemática clara */
+    font-size: 13px;
+    font-weight: normal;
+    letter-spacing: 0.5px;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
+}
+
+/* Flechita del tooltip */
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #222 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
