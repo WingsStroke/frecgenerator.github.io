@@ -385,6 +385,7 @@ function calculateStatsForDataset(raw, datasetName) {
 // SISTEMA DE GRÁFICOS (CHART.JS)
 // ==========================================
 
+// Asegurar registro del complemento
 if (typeof ChartBoxPlot !== 'undefined') {
     Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
 }
@@ -442,28 +443,35 @@ function renderChartsForDataset(ds, index) {
         options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
     });
 
-    // 3. Diagrama de Caja y Bigotes (Box Plot)
-    const ctxBox = document.getElementById(`chartBox-${index}`).getContext('2d');
-    new Chart(ctxBox, {
-        type: 'boxplot',
-        data: {
-            labels: ['Distribución'],
-            datasets: [{
-                label: ds.name,
-                data: [boxData],
-                backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                borderColor: '#000',
-                borderWidth: 2,
-                itemRadius: 3,
-                outlierBackgroundColor: '#000'
-            }]
-        },
-        options: {
-            responsive: true,
-            indexAxis: 'y', // Muestra la caja en formato horizontal (más elegante)
-            plugins: { legend: { display: false } }
-        }
-    });
+    // 3. Diagrama de Caja y Bigotes (Box Plot) con Cinturón de Seguridad
+    try {
+        const ctxBox = document.getElementById(`chartBox-${index}`).getContext('2d');
+        new Chart(ctxBox, {
+            type: 'boxplot',
+            data: {
+                labels: ['Distribución'],
+                datasets: [{
+                    label: ds.name,
+                    data: [boxData],
+                    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                    borderColor: '#000',
+                    borderWidth: 2,
+                    itemRadius: 3,
+                    outlierBackgroundColor: '#000'
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: 'y', // Muestra la caja en formato horizontal
+                plugins: { legend: { display: false } }
+            }
+        });
+    } catch (error) {
+        console.error("Error renderizando BoxPlot:", error);
+        // Si falla, mostramos un error amigable en la caja en lugar de colapsar la página
+        const container = document.getElementById(`chartBox-${index}`).parentElement;
+        container.innerHTML = `<p style="color:#a00000; text-align:center; padding:20px;">No se pudo cargar la librería del diagrama de caja. Esto puede deberse a la conexión o caché del navegador.</p>`;
+    }
 }
 
 // Función global para desplegar el acordeón
@@ -537,7 +545,6 @@ function renderCarousel() {
             </div>
         `;
 
-        // NUEVO: Menú Acordeón para Gráficos
         let chartsHtml = `
             <div class="chart-accordion">
                 <div class="accordion-item">
