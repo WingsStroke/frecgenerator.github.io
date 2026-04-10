@@ -26,7 +26,6 @@ h1 { border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
 .mode-selector, .settings-panel { margin: 15px 0; padding: 15px; border: 1px dashed var(--border-color); background-color: var(--bg-color); }
 .mode-selector label, .settings-panel label { display: flex; align-items: center; margin-bottom: 10px; cursor: pointer; }
 
-/* ESTILOS NUEVOS PARA EL TEXTAREA (COPY-PASTE) */
 #pasteArea { margin-bottom: 15px; }
 textarea {
     width: 100%; min-height: 120px; border: 1px solid var(--border-color);
@@ -57,6 +56,12 @@ button {
 }
 button:hover { background-color: var(--bg-color); color: var(--text-color); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* NUEVOS ESTILOS PARA BOTONES DE LIMPIEZA */
+button.btn-secondary { background-color: #666; border-color: #444; }
+button.btn-secondary:hover { background-color: var(--bg-color); color: #666; }
+button.btn-danger { background-color: #a00000; border-color: #800000; color: #fff; }
+button.btn-danger:hover { background-color: var(--bg-color); color: #a00000; }
 
 table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
 th, td { border: 1px solid var(--border-color); padding: 10px; text-align: center; }

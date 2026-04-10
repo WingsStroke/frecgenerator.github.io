@@ -41,21 +41,17 @@ document.querySelectorAll('input[name="kMethod"]').forEach(r => {
     });
 });
 
-// Selector de Modos (Automático, Manual, Copy-Paste)
+// Selector de Modos (File, Paste)
 document.querySelectorAll('input[name="uploadMode"]').forEach(r => {
     r.addEventListener('change', (e) => {
         const fileInput = document.getElementById('fileInput');
         const fileQueue = document.getElementById('fileQueue');
         const pasteArea = document.getElementById('pasteArea');
         
-        fileInput.classList.remove('hidden');
-        pasteArea.classList.add('hidden');
-        fileInput.removeAttribute('multiple');
-        
-        if (e.target.value === 'auto') {
+        if (e.target.value === 'file') {
+            fileInput.classList.remove('hidden');
+            pasteArea.classList.add('hidden');
             fileInput.setAttribute('multiple', 'multiple');
-            if (uploadedFilesMap.size > 0) fileQueue.classList.remove('hidden');
-        } else if (e.target.value === 'manual') {
             if (uploadedFilesMap.size > 0) fileQueue.classList.remove('hidden');
         } else if (e.target.value === 'paste') {
             fileInput.classList.add('hidden');
@@ -110,23 +106,20 @@ async function processAllData() {
     globalDatasets = [];
     document.getElementById('resultsArea').classList.add('hidden');
 
-    // Flujo para el Copy-Paste
     if (uploadMode === 'paste') {
         const text = document.getElementById('pasteInput').value;
         if (!text.trim()) return alert("Por favor, pega algunos datos en el cuadro de texto.");
         
-        // Magia Regex: Corta el texto por cualquier combinación de espacios, saltos de línea, comas, punto y comas o slashes.
         const rawStrings = text.split(/[;,\/\s\n]+/);
         const rawNums = rawStrings.map(s => parseFloat(s)).filter(n => !isNaN(n));
         
         if (rawNums.length === 0) return alert("No se encontraron números válidos. Asegúrate de usar punto (.) para los decimales.");
         
-        globalDatasets.push(calculateStatsForDataset(rawNums, "Datos Pegados (Copy-Paste)"));
+        globalDatasets.push(calculateStatsForDataset(rawNums, "Datos Pegados"));
         renderCarousel();
         return;
     }
     
-    // Flujo para Archivos Excel
     if (uploadedFilesMap.size === 0) return alert("Sube al menos un archivo Excel.");
     
     for (let [fileId, fileData] of uploadedFilesMap) {
@@ -172,7 +165,7 @@ function extractNumbersFromFile(file) {
 }
 
 // ==========================================
-// MODAL VISUAL INTERACTIVO (SHIFT + CTRL + AUTO-SCROLL)
+// MODAL VISUAL INTERACTIVO
 // ==========================================
 let preview2DArray = [];
 let isDragging = false;
@@ -194,6 +187,13 @@ function openExcelModal(fileId) {
         preview2DArray = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
         
         renderPreviewTable();
+        
+        // Restaurar estado visual de los rangos guardados previamente
+        const savedRangesCount = fileObj.customRanges.length;
+        if(savedRangesCount > 0) {
+            alert(`Este archivo ya tiene ${savedRangesCount} rango(s) guardado(s). Las celdas negras están bloqueadas.`);
+        }
+        
         document.getElementById('previewModal').classList.remove('hidden');
     };
     reader.readAsArrayBuffer(fileObj.file);
@@ -218,6 +218,10 @@ function renderPreviewTable() {
 
     table.addEventListener('mousedown', (e) => {
         if(e.target.tagName !== 'TD') return;
+        
+        // FIX BUG 2: Evitar seleccionar celdas ya guardadas
+        if(e.target.classList.contains('cell-saved')) return; 
+
         isDragging = true;
         const r = parseInt(e.target.dataset.r);
         const c = parseInt(e.target.dataset.c);
@@ -238,6 +242,8 @@ function renderPreviewTable() {
 
     table.addEventListener('mouseover', (e) => {
         if(!isDragging || !startCell || e.target.tagName !== 'TD') return;
+        if(e.target.classList.contains('cell-saved')) return; // FIX BUG 2
+        
         const r = parseInt(e.target.dataset.r);
         const c = parseInt(e.target.dataset.c);
         selectRange(startCell, {r, c}, true);
@@ -282,14 +288,25 @@ function selectRange(start, end, clearFirst) {
     for(let r = minR; r <= maxR; r++) {
         for(let c = minC; c <= maxC; c++) {
             const td = document.querySelector(`td[data-r="${r}"][data-c="${c}"]`);
+            // Solo seleccionar si no está guardada ya
             if(td && !td.classList.contains('cell-saved')) td.classList.add('cell-selected');
         }
     }
 }
 
+// BOTONES DE MODAL
 function clearSelection() {
     document.querySelectorAll('.cell-selected').forEach(td => td.classList.remove('cell-selected'));
 }
+document.getElementById('clearSelectionBtn').addEventListener('click', clearSelection);
+
+document.getElementById('resetRangesBtn').addEventListener('click', () => {
+    if(!confirm("¿Estás seguro de que deseas borrar todos los rangos guardados para este archivo?")) return;
+    const fileObj = uploadedFilesMap.get(currentPreviewFileId);
+    fileObj.customRanges = []; // Resetear memoria lógica
+    document.querySelectorAll('.cell-saved').forEach(td => td.classList.remove('cell-saved')); // Resetear UI
+    updateRangeCount();
+});
 
 document.getElementById('saveRangeBtn').addEventListener('click', () => {
     const fileObj = uploadedFilesMap.get(currentPreviewFileId);
@@ -313,7 +330,7 @@ document.getElementById('saveRangeBtn').addEventListener('click', () => {
 
 function updateRangeCount() {
     const fileObj = uploadedFilesMap.get(currentPreviewFileId);
-    document.getElementById('rangeCount').innerText = `Rangos guardados: ${fileObj.customRanges.length}`;
+    document.getElementById('rangeCount').innerText = `Rangos guardados: ${fileObj.customRanges.length}/10`;
 }
 
 document.getElementById('finishRangesBtn').addEventListener('click', () => {

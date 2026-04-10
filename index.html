@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
-    <link rel="stylesheet" href="styles.css?v=1.3.0">
+    <link rel="stylesheet" href="styles.css?v=1.3.1">
 </head>
 <body>
 
@@ -19,8 +19,7 @@
         <div class="controls">
             <div class="mode-selector">
                 <h3>Modo de Importación</h3>
-                <label><input type="radio" name="uploadMode" value="auto" checked> Automático (Hasta 10 archivos distintos)</label>
-                <label><input type="radio" name="uploadMode" value="manual"> Selección Manual (Subir 1 archivo y seleccionar rangos)</label>
+                <label><input type="radio" name="uploadMode" value="file" checked> Archivos Excel (Procesamiento Automático o Selección Manual por rangos)</label>
                 <label><input type="radio" name="uploadMode" value="paste"> Pegar Texto Directamente (Copy-Paste)</label>
             </div>
 
@@ -63,11 +62,13 @@
                 <h2 id="modalTitle">Previsualización de Excel</h2>
                 <span class="close-btn" id="closeModalBtn">&times;</span>
             </div>
-            <p><strong>Comandos:</strong> Haz clic y arrastra. Usa <b>SHIFT + Clic</b> para rangos largos. Usa <b>CTRL + Clic</b> para celdas individuales.</p>
+            <p><strong>Comandos:</strong> Haz clic y arrastra. Usa <b>SHIFT + Clic</b> para rangos largos. Usa <b>CTRL + Clic</b> para agregar o quitar celdas individuales de tu selección actual.</p>
             
             <div class="range-controls">
-                <button id="saveRangeBtn">Guardar Rango Seleccionado</button>
-                <button id="finishRangesBtn">Cerrar y Guardar Cambios</button>
+                <button id="saveRangeBtn">Guardar Rango</button>
+                <button id="clearSelectionBtn" class="btn-secondary">Limpiar Selección Activa</button>
+                <button id="resetRangesBtn" class="btn-danger">Borrar Todos Los Rangos</button>
+                <button id="finishRangesBtn">Terminar y Cerrar</button>
                 <span id="rangeCount">Rangos guardados: 0/10</span>
             </div>
             
@@ -75,6 +76,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=1.3.0"></script>
+    <script src="script.js?v=1.3.1"></script>
 </body>
 </html>
