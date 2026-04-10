@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
-    <link rel="stylesheet" href="styles.css?v=1.2.0">
+    <link rel="stylesheet" href="styles.css?v=1.3.0">
 </head>
 <body>
 
@@ -17,11 +17,22 @@
         <h1>Generador Tablas de Frecuencia</h1>
         
         <div class="controls">
+            <div class="mode-selector">
+                <h3>Modo de Importación</h3>
+                <label><input type="radio" name="uploadMode" value="auto" checked> Automático (Hasta 10 archivos distintos)</label>
+                <label><input type="radio" name="uploadMode" value="manual"> Selección Manual (Subir 1 archivo y seleccionar rangos)</label>
+                <label><input type="radio" name="uploadMode" value="paste"> Pegar Texto Directamente (Copy-Paste)</label>
+            </div>
+
             <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" multiple>
             
             <div id="fileQueue" class="file-queue hidden">
                 <h3>Archivos Cargados</h3>
                 <ul id="fileList"></ul>
+            </div>
+
+            <div id="pasteArea" class="hidden">
+                <textarea id="pasteInput" placeholder="Pega tus datos aquí...&#10;Sepáralos usando: espacios, comas (,), punto y coma (;), slash (/) o saltos de línea.&#10;¡Recuerda usar punto (.) para los decimales!"></textarea>
             </div>
             
             <div class="settings-panel">
@@ -64,6 +75,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=1.2.1"></script>
+    <script src="script.js?v=1.3.0"></script>
 </body>
 </html>

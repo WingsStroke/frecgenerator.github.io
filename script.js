@@ -41,6 +41,30 @@ document.querySelectorAll('input[name="kMethod"]').forEach(r => {
     });
 });
 
+// Selector de Modos (Automático, Manual, Copy-Paste)
+document.querySelectorAll('input[name="uploadMode"]').forEach(r => {
+    r.addEventListener('change', (e) => {
+        const fileInput = document.getElementById('fileInput');
+        const fileQueue = document.getElementById('fileQueue');
+        const pasteArea = document.getElementById('pasteArea');
+        
+        fileInput.classList.remove('hidden');
+        pasteArea.classList.add('hidden');
+        fileInput.removeAttribute('multiple');
+        
+        if (e.target.value === 'auto') {
+            fileInput.setAttribute('multiple', 'multiple');
+            if (uploadedFilesMap.size > 0) fileQueue.classList.remove('hidden');
+        } else if (e.target.value === 'manual') {
+            if (uploadedFilesMap.size > 0) fileQueue.classList.remove('hidden');
+        } else if (e.target.value === 'paste') {
+            fileInput.classList.add('hidden');
+            fileQueue.classList.add('hidden');
+            pasteArea.classList.remove('hidden');
+        }
+    });
+});
+
 document.getElementById('fileInput').addEventListener('change', handleFileUpload);
 
 function handleFileUpload(e) {
@@ -76,16 +100,34 @@ document.getElementById('exportBtn').addEventListener('click', exportAllToExcel)
 // PROCESAMIENTO PRINCIPAL
 // ==========================================
 async function processAllData() {
-    if (uploadedFilesMap.size === 0) return alert("Sube al menos un archivo Excel.");
-    
     activeMethod = document.querySelector('input[name="kMethod"]:checked').value;
     if (activeMethod === 'manual') {
         const manualK = parseInt(document.getElementById('kManualValue').value);
         if (isNaN(manualK) || manualK < 1) return alert("Ingresa un número de intervalos (k) válido.");
     }
 
+    const uploadMode = document.querySelector('input[name="uploadMode"]:checked').value;
     globalDatasets = [];
     document.getElementById('resultsArea').classList.add('hidden');
+
+    // Flujo para el Copy-Paste
+    if (uploadMode === 'paste') {
+        const text = document.getElementById('pasteInput').value;
+        if (!text.trim()) return alert("Por favor, pega algunos datos en el cuadro de texto.");
+        
+        // Magia Regex: Corta el texto por cualquier combinación de espacios, saltos de línea, comas, punto y comas o slashes.
+        const rawStrings = text.split(/[;,\/\s\n]+/);
+        const rawNums = rawStrings.map(s => parseFloat(s)).filter(n => !isNaN(n));
+        
+        if (rawNums.length === 0) return alert("No se encontraron números válidos. Asegúrate de usar punto (.) para los decimales.");
+        
+        globalDatasets.push(calculateStatsForDataset(rawNums, "Datos Pegados (Copy-Paste)"));
+        renderCarousel();
+        return;
+    }
+    
+    // Flujo para Archivos Excel
+    if (uploadedFilesMap.size === 0) return alert("Sube al menos un archivo Excel.");
     
     for (let [fileId, fileData] of uploadedFilesMap) {
         if (fileData.customRanges.length > 0) {
@@ -401,19 +443,16 @@ function renderCarousel() {
     document.getElementById('resultsArea').classList.remove('hidden');
     document.getElementById('exportBtn').classList.remove('hidden');
     
-    // Resetear posición de scroll al inicio
     carousel.scrollLeft = 0;
     updateCarouselControls();
 }
 
-// Función exclusiva para actualizar textos y botones
 function updateCarouselControls() {
     document.getElementById('carouselIndicator').innerText = `Tabla ${currentSlide + 1} de ${globalDatasets.length}`;
     document.getElementById('prevBtn').disabled = currentSlide === 0;
     document.getElementById('nextBtn').disabled = currentSlide === globalDatasets.length - 1;
 }
 
-// Control por Botones
 document.getElementById('prevBtn').addEventListener('click', () => {
     if (currentSlide > 0) { 
         currentSlide--; 
@@ -432,14 +471,11 @@ document.getElementById('nextBtn').addEventListener('click', () => {
     }
 });
 
-// Control por Scroll Manual (Sincronización)
 document.getElementById('resultsCarousel').addEventListener('scroll', (e) => {
     const carousel = e.target;
     const width = carousel.clientWidth;
-    // Calculamos matemáticamente en qué "slide" estamos basados en la posición del scroll
     const newSlide = Math.round(carousel.scrollLeft / width);
     
-    // Si la diapositiva en pantalla cambió, actualizamos la UI
     if (newSlide !== currentSlide && newSlide >= 0 && newSlide < globalDatasets.length) {
         currentSlide = newSlide;
         updateCarouselControls();
