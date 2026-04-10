@@ -384,6 +384,11 @@ function calculateStatsForDataset(raw, datasetName) {
 // ==========================================
 // SISTEMA DE GRÁFICOS (CHART.JS)
 // ==========================================
+
+if (typeof ChartBoxPlot !== 'undefined') {
+    Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
+}
+
 function renderChartsForDataset(ds, index) {
     const labels = ds.classesData.map(c => cleanNum(c.xi));
     const fiData = ds.classesData.map(c => c.fi);
