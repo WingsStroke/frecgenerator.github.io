@@ -3,33 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Tablas de Frecuencia Avanzado</title>
+    <title>Generador de Tablas de Frecuencia Avanzado 1.1.0</title>
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
-    <link rel="stylesheet" href="styles.css?v=1.0.1">
+    <link rel="stylesheet" href="styles.css?v=1.1.0">
 </head>
 <body>
 
     <div class="container">
-        <h1>Generador de Tablas de Frecuencia</h1>
+        <h1>Análisis Estadístico por Lotes</h1>
         
         <div class="controls">
-            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
+            <div class="mode-selector">
+                <h3>Modo de Importación</h3>
+                <label><input type="radio" name="uploadMode" value="auto" checked> Automático (Hasta 10 archivos distintos)</label>
+                <label><input type="radio" name="uploadMode" value="manual"> Selección Manual (Subir 1 archivo y seleccionar N rangos visualmente)</label>
+            </div>
+
+            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" multiple>
             
             <div class="settings-panel">
                 <h3>Configuración de Intervalos (k)</h3>
-                <label>
-                    <input type="radio" name="kMethod" value="sturges" checked> 
-                    Automático (Regla de Sturges)
-                </label>
-                <label>
-                    <input type="radio" name="kMethod" value="manual"> 
-                    Definir Manualmente: 
-                    <input type="number" id="kManualValue" min="1" step="1" placeholder="Ej: 6" disabled>
-                </label>
+                <label><input type="radio" name="kMethod" value="sturges" checked> Automático (Regla de Sturges)</label>
+                <label><input type="radio" name="kMethod" value="manual"> Definir Manualmente: <input type="number" id="kManualValue" min="1" step="1" placeholder="Ej: 6" disabled></label>
             </div>
 
             <div class="btn-group">
@@ -39,25 +38,27 @@
         </div>
 
         <div id="resultsArea" class="hidden">
-            <h2>Tabla de Frecuencias</h2>
-            <table id="freqTable">
-                <thead>
-                    <tr>
-                        <th>Límite Inf. (Li)</th>
-                        <th>Límite Sup. (Ls)</th>
-                        <th>Marca de Clase (Xi)</th>
-                        <th>Frec. Absoluta (fi)</th>
-                        <th>Frec. Acumulada (Fi)</th>
-                        <th>Frec. Relativa (hi)</th>
-                        <th>Frec. Rel. Acum. (Hi)</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div id="statsArea"></div>
+            </div>
+    </div>
+
+    <div id="previewModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Previsualización de Excel</h2>
+                <span class="close-btn" id="closeModalBtn">&times;</span>
+            </div>
+            <p>Haz clic y arrastra sobre las celdas para seleccionar un conjunto de datos (Máximo 10 rangos).</p>
+            
+            <div class="range-controls">
+                <button id="saveRangeBtn">Guardar Rango Seleccionado</button>
+                <button id="finishRangesBtn">Terminar y Procesar</button>
+                <span id="rangeCount">Rangos guardados: 0/10</span>
+            </div>
+            
+            <div id="tableContainer"></div>
         </div>
     </div>
 
-    <script src="script.js?v=1.0.2"></script>
+    <script src="script.js?v=1.1.0"></script>
 </body>
 </html>
