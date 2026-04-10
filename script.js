@@ -3,7 +3,7 @@
 // ==========================================
 let activeMethod = 'sturges'; 
 let globalDatasets = []; 
-let uploadedFilesMap = new Map(); // Guarda la info de los archivos y sus rangos
+let uploadedFilesMap = new Map(); 
 const MAX_DATASETS = 10;
 let currentSlide = 0;
 
@@ -89,12 +89,10 @@ async function processAllData() {
     
     for (let [fileId, fileData] of uploadedFilesMap) {
         if (fileData.customRanges.length > 0) {
-            // Usar los rangos manuales guardados previamente
             fileData.customRanges.forEach((rangeNums, idx) => {
                 globalDatasets.push(calculateStatsForDataset(rangeNums, `${fileData.file.name} (Rango ${idx+1})`));
             });
         } else {
-            // Extracción automática si no hubo selección manual
             const raw = await extractNumbersFromFile(fileData.file);
             if (raw.length > 0) {
                 globalDatasets.push(calculateStatsForDataset(raw, fileData.file.name));
@@ -176,7 +174,6 @@ function renderPreviewTable() {
 
     const table = document.getElementById('interactiveTable');
 
-    // LOGICA DE SELECCION (CTRL y SHIFT)
     table.addEventListener('mousedown', (e) => {
         if(e.target.tagName !== 'TD') return;
         isDragging = true;
@@ -184,15 +181,12 @@ function renderPreviewTable() {
         const c = parseInt(e.target.dataset.c);
 
         if (e.ctrlKey || e.metaKey) {
-            // CTRL: Alternar selección individual
             e.target.classList.toggle('cell-selected');
             lastClickedCell = {r, c};
             startCell = null; 
         } else if (e.shiftKey && lastClickedCell) {
-            // SHIFT: Seleccionar rango desde el último clic
             selectRange(lastClickedCell, {r, c}, true);
         } else {
-            // CLIC NORMAL: Limpiar y empezar nuevo arrastre
             clearSelection();
             e.target.classList.add('cell-selected');
             startCell = {r, c};
@@ -207,11 +201,10 @@ function renderPreviewTable() {
         selectRange(startCell, {r, c}, true);
     });
 
-    // LOGICA DE AUTO-SCROLL
     container.addEventListener('mousemove', (e) => {
         if(!isDragging) return;
         const rect = container.getBoundingClientRect();
-        const buffer = 40; // Pixeles desde el borde para activar
+        const buffer = 40; 
         let dx = 0, dy = 0;
 
         if (e.clientX < rect.left + buffer) dx = -15;
@@ -337,7 +330,7 @@ function calculateStatsForDataset(raw, datasetName) {
 }
 
 // ==========================================
-// CARRUSEL DE RENDERIZADO
+// CARRUSEL DE RENDERIZADO Y SINCRONIZACIÓN DE UI
 // ==========================================
 function renderCarousel() {
     const carousel = document.getElementById('resultsCarousel');
@@ -407,27 +400,51 @@ function renderCarousel() {
 
     document.getElementById('resultsArea').classList.remove('hidden');
     document.getElementById('exportBtn').classList.remove('hidden');
-    updateCarouselUI();
+    
+    // Resetear posición de scroll al inicio
+    carousel.scrollLeft = 0;
+    updateCarouselControls();
 }
 
-document.getElementById('prevBtn').addEventListener('click', () => {
-    if (currentSlide > 0) { currentSlide--; updateCarouselUI(); }
-});
-
-document.getElementById('nextBtn').addEventListener('click', () => {
-    if (currentSlide < globalDatasets.length - 1) { currentSlide++; updateCarouselUI(); }
-});
-
-function updateCarouselUI() {
-    const carousel = document.getElementById('resultsCarousel');
-    const width = carousel.clientWidth;
-    // Scroll Horizontal dinámico
-    carousel.scrollTo({ left: width * currentSlide, behavior: 'smooth' });
-    
+// Función exclusiva para actualizar textos y botones
+function updateCarouselControls() {
     document.getElementById('carouselIndicator').innerText = `Tabla ${currentSlide + 1} de ${globalDatasets.length}`;
     document.getElementById('prevBtn').disabled = currentSlide === 0;
     document.getElementById('nextBtn').disabled = currentSlide === globalDatasets.length - 1;
 }
+
+// Control por Botones
+document.getElementById('prevBtn').addEventListener('click', () => {
+    if (currentSlide > 0) { 
+        currentSlide--; 
+        const carousel = document.getElementById('resultsCarousel');
+        carousel.scrollTo({ left: carousel.clientWidth * currentSlide, behavior: 'smooth' });
+        updateCarouselControls(); 
+    }
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+    if (currentSlide < globalDatasets.length - 1) { 
+        currentSlide++; 
+        const carousel = document.getElementById('resultsCarousel');
+        carousel.scrollTo({ left: carousel.clientWidth * currentSlide, behavior: 'smooth' });
+        updateCarouselControls(); 
+    }
+});
+
+// Control por Scroll Manual (Sincronización)
+document.getElementById('resultsCarousel').addEventListener('scroll', (e) => {
+    const carousel = e.target;
+    const width = carousel.clientWidth;
+    // Calculamos matemáticamente en qué "slide" estamos basados en la posición del scroll
+    const newSlide = Math.round(carousel.scrollLeft / width);
+    
+    // Si la diapositiva en pantalla cambió, actualizamos la UI
+    if (newSlide !== currentSlide && newSlide >= 0 && newSlide < globalDatasets.length) {
+        currentSlide = newSlide;
+        updateCarouselControls();
+    }
+});
 
 // ==========================================
 // EXPORTACIÓN A EXCELJS
