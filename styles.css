@@ -103,3 +103,34 @@ tr:nth-child(even) { background-color: var(--hover-bg); }
 #tableContainer td, #tableContainer th { padding: 5px 10px; min-width: 50px; cursor: cell; }
 .cell-selected { background-color: var(--highlight-bg) !important; font-weight: bold; }
 .cell-saved { background-color: var(--text-color) !important; color: var(--bg-color) !important; }
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    background-color: #ffffff;
+}
+
+.chart-item {
+    width: 100%;
+    min-height: 300px;
+}
+
+.chart-item h4 {
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 14px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+/* Responsividad para móviles */
+@media (max-width: 600px) {
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
