@@ -7,6 +7,7 @@ let uploadedFilesMap = new Map();
 const MAX_DATASETS = 10;
 let currentSlide = 0;
 
+// Registro global de Chart.js para BoxPlot
 if (typeof Chart !== 'undefined' && typeof ChartBoxPlot !== 'undefined') {
     Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
 }
@@ -443,7 +444,6 @@ function renderChartsForDataset(ds, index) {
     });
 
     // 3. Diagrama de Caja y Bigotes (Box Plot)
-    // 3. Diagrama de Caja y Bigotes (Box Plot)
     try {
         const ctxBox = document.getElementById(`chartBox-${index}`).getContext('2d');
         new Chart(ctxBox, {
@@ -462,14 +462,10 @@ function renderChartsForDataset(ds, index) {
             },
             options: {
                 responsive: true,
-                indexAxis: 'y', // Muestra la caja en formato horizontal (más elegante)
+                indexAxis: 'y', // Muestra la caja en formato horizontal
                 plugins: { legend: { display: false } }
             }
         });
-    } catch (e) {
-        console.error("Error cargando el BoxPlot:", e);
-        const container = document.getElementById(`chartBox-${index}`).parentElement;
-        container.innerHTML = `<p style="color:#a00000; text-align:center; padding:20px;">El Diagrama de Caja no pudo ser cargado por un error de red con la librería gráfica.</p>`;
     } catch (e) {
         console.error("Error cargando el BoxPlot:", e);
         const container = document.getElementById(`chartBox-${index}`).parentElement;
