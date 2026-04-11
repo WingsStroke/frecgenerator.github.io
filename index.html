@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suite Estadística 2.0</title>
+    <title>Suite Estadística 2.1</title>
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
@@ -14,7 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
-    <link rel="stylesheet" href="styles.css?v=2.0.0">
+    <link rel="stylesheet" href="styles.css?v=2.1.0">
 </head>
 <body>
     <div class="container">
@@ -32,7 +32,7 @@
                 <label>
                     <input type="radio" name="analysisMode" value="bivariate"> 
                     <span class="tooltip" style="font-weight: bold;">Bivariado (Tablas Cruzadas - 2 Variables)
-                        <span class="tooltiptext">Relaciona dos columnas para encontrar patrones conjuntos.</span>
+                        <span class="tooltiptext">Relaciona dos columnas seleccionadas manualmente para encontrar patrones conjuntos.</span>
                     </span>
                 </label>
             </div>
@@ -104,19 +104,35 @@
     </div>
 
     <div id="bivariateModal" class="modal hidden">
-        <div class="modal-content" style="max-width: 600px; height: auto;">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2 id="bivariateModalTitle">Cruzar Variables (Tabla de Contingencia)</h2>
+                <h2 id="bivariateModalTitle">Cruce Bivariado Interactivo</h2>
                 <span class="close-btn" id="closeBivariateModalBtn">&times;</span>
             </div>
-            <p>Selecciona las dos columnas del archivo Excel que deseas relacionar:</p>
-            <div class="settings-panel" style="display:flex; flex-direction:column; gap:15px;">
-                <label><b>Variable X (Filas):</b> <select id="bivariateXSelect" style="width:100%; padding:8px; margin-top:5px;"></select></label>
-                <label><b>Variable Y (Columnas):</b> <select id="bivariateYSelect" style="width:100%; padding:8px; margin-top:5px;"></select></label>
+            <p><strong>Comandos:</strong> Selecciona las celdas y asígnalas a su respectiva variable. <b>Importante:</b> Ambos rangos deben tener exactamente la misma cantidad de datos seleccionados.</p>
+            
+            <div class="range-controls" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                <div style="border: 2px solid #0000a0; padding: 10px; background: #f0f0ff; flex: 1; min-width: 250px;">
+                    <input type="text" id="bivariateNameX" placeholder="Nombre de la Variable X (Filas)" style="margin-bottom: 5px; width: 100%; padding: 5px;"><br>
+                    <button id="setRangeXBtn" style="background-color: #0000a0; color: #fff; width: 100%;">Asignar al Rango X</button>
+                    <div id="countX" style="font-size: 13px; font-weight: bold; margin-top: 5px;">Datos seleccionados: 0</div>
+                </div>
+                
+                <div style="border: 2px solid #00a000; padding: 10px; background: #f0fff0; flex: 1; min-width: 250px;">
+                    <input type="text" id="bivariateNameY" placeholder="Nombre de la Variable Y (Columnas)" style="margin-bottom: 5px; width: 100%; padding: 5px;"><br>
+                    <button id="setRangeYBtn" style="background-color: #00a000; color: #fff; width: 100%;">Asignar al Rango Y</button>
+                    <div id="countY" style="font-size: 13px; font-weight: bold; margin-top: 5px;">Datos seleccionados: 0</div>
+                </div>
             </div>
-            <div style="text-align: right; margin-top: 20px;">
-                <button id="saveBivariateBtn" style="background-color: #a00000; border-color: #800000;">Guardar Cruce</button>
+            
+            <div class="range-controls" style="margin-top: 15px;">
+                <button id="clearBivariateSelectionBtn" class="btn-secondary">Limpiar Selección Activa</button>
+                <button id="resetBivariateBtn" class="btn-danger">Borrar Todo el Cruce</button>
+                <button id="saveBivariateBtn" style="background-color: #a00000; color: #fff; border-color: #800000;">Confirmar Cruce y Cerrar</button>
+                <span id="bivariateRangeCount" style="margin-left: 15px; font-weight: bold;">Cruces guardados: 0/10</span>
             </div>
+            
+            <div id="bivariateTableContainer" style="flex-grow: 1; overflow: auto; border: 1px solid #000; position: relative; user-select: none;"></div>
         </div>
     </div>
 
@@ -142,8 +158,10 @@
         </div>
     </div>
 
-    <button id="floatingProcedureBtn" class="floating-btn hidden">Ver Procedimiento</button>
+    <button id="floatingProcedureBtn" class="floating-btn hidden">
+        Ver Procedimiento
+    </button>
 
-    <script type="module" src="js/main.js?v=2.0.0"></script>
+    <script type="module" src="js/main.js?v=2.1.0"></script>
 </body>
 </html>

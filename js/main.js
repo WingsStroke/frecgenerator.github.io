@@ -1,6 +1,6 @@
 import { AppState } from './state.js';
 import { calculateStatsForDataset, calculateBivariateStats } from './math.js';
-import { extractNumbersFromFile, extractColumnsFromFile, exportAllToExcel } from './excel.js';
+import { extractNumbersFromFile, exportAllToExcel } from './excel.js';
 import { renderCarousel, openExcelModal, openBivariateModal, initUIListeners } from './ui.js';
 import { exportToPDF } from './pdf.js'; 
 
@@ -66,9 +66,8 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
         
         document.getElementById(`btn_${fileId}`).addEventListener('click', async () => {
             if (AppState.analysisMode === 'bivariate') {
-                const cols = await extractColumnsFromFile(file);
-                if(cols.length < 2) return alert("El archivo debe tener al menos 2 columnas con encabezados para cruzar datos.");
-                openBivariateModal(fileId, cols);
+                // Abre directamente la pizarra visual en lugar de leer columnas ocultas
+                openBivariateModal(fileId);
             } else {
                 openExcelModal(fileId);
             }
@@ -125,7 +124,7 @@ document.getElementById('processBtn').addEventListener('click', async () => {
                     }
                 });
             } else {
-                alert(`Para el archivo ${fileData.file.name}, debes darle a "Configurar Archivo" y cruzar las variables antes de procesar.`);
+                alert(`Para el archivo ${fileData.file.name}, debes darle a "Configurar Archivo" y armar los pares de variables antes de procesar.`);
             }
         }
     }

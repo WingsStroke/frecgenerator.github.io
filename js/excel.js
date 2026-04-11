@@ -13,35 +13,6 @@ export function extractNumbersFromFile(file) {
     });
 }
 
-export function extractColumnsFromFile(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(sheet, {header: 1});
-            
-            if(json.length < 2) return resolve([]);
-            
-            const headers = json[0].map(h => String(h).trim());
-            const columns = headers.map(h => ({ header: h, data: [] }));
-
-            for(let i = 1; i < json.length; i++) {
-                let row = json[i];
-                for(let j = 0; j < headers.length; j++) {
-                    let val = row[j];
-                    if(val !== undefined && val !== null && val !== "") {
-                        columns[j].data.push(val);
-                    }
-                }
-            }
-            resolve(columns.filter(c => c.data.length > 0));
-        };
-        reader.readAsArrayBuffer(file);
-    });
-}
-
 export async function exportAllToExcel(globalDatasets, activeMethod) {
     const wb = new ExcelJS.Workbook();
     wb.creator = 'Generador Estadístico Lotes';
@@ -57,7 +28,6 @@ export async function exportAllToExcel(globalDatasets, activeMethod) {
         const dataRange = `'D_${idx+1}_${shortName}'!A2:A${ds.n + 1}`;
         const ws = wb.addWorksheet(`A_${idx+1}_${shortName}`);
         
-        // REGLAS PARA TABLAS AGRUPADAS VS NO AGRUPADAS EN EXCEL
         if (ds.isGrouped) {
             ws.addRow(['LÍMITE INF. (LI)', 'LÍMITE SUP. (LS)', 'MARCA DE CLASE (XI)', 'FREC. ABS (FI)', 'FREC. ACUM (FI)', 'FREC. REL (HI)', 'FREC. REL ACUM (HI)']);
             ws.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));

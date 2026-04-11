@@ -267,3 +267,40 @@ tr:nth-child(even) { background-color: var(--hover-bg); }
     font-weight: bold;
     background-color: #f9f9f9;
 }
+
+.cross-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+.cross-table th {
+    background-color: #e0e0e0;
+    color: #000;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+}
+.cross-table td {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    text-align: center;
+}
+.cross-table .total-cell {
+    font-weight: bold;
+    background-color: #f9f9f9;
+}
+
+#bivariateTableContainer table { width: max-content; }
+#bivariateTableContainer td, #bivariateTableContainer th { padding: 5px 10px; min-width: 50px; cursor: cell; }
+
+.cell-saved-x {
+    background-color: #0000a0 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+.cell-saved-y {
+    background-color: #00a000 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+}

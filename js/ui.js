@@ -184,6 +184,9 @@ export function renderCarousel() {
     carousel.scrollLeft = 0; updateCarouselControls();
 }
 
+// ----------------------------------------------------
+// SISTEMA DE INTERFAZ: UNIVARIADO
+// ----------------------------------------------------
 let preview2DArray = []; let isDragging = false; let startCell = null; let lastClickedCell = null; let autoScrollInterval = null;
 
 export function openExcelModal(fileId) {
@@ -241,32 +244,89 @@ function selectRange(start, end, clearFirst) {
     const minR = Math.min(start.r, end.r), maxR = Math.max(start.r, end.r);
     const minC = Math.min(start.c, end.c), maxC = Math.max(start.c, end.c);
     for(let r = minR; r <= maxR; r++) for(let c = minC; c <= maxC; c++) {
-        const td = document.querySelector(`td[data-r="${r}"][data-c="${c}"]`);
+        const td = document.querySelector(`#interactiveTable td[data-r="${r}"][data-c="${c}"]`);
         if(td && !td.classList.contains('cell-saved')) td.classList.add('cell-selected');
     }
 }
 
-function clearSelection() { document.querySelectorAll('.cell-selected').forEach(td => td.classList.remove('cell-selected')); }
+function clearSelection() { document.querySelectorAll('#interactiveTable .cell-selected').forEach(td => td.classList.remove('cell-selected')); }
 export function updateRangeCount() { document.getElementById('rangeCount').innerText = `Rangos guardados: ${AppState.uploadedFilesMap.get(AppState.currentPreviewFileId).customRanges.length}/10`; }
 
-export function openBivariateModal(fileId, columns) {
-    AppState.currentPreviewFileId = fileId;
-    AppState.currentExcelColumns = columns;
-    
-    const selX = document.getElementById('bivariateXSelect');
-    const selY = document.getElementById('bivariateYSelect');
-    selX.innerHTML = ''; selY.innerHTML = '';
-    
-    columns.forEach((col, idx) => {
-        let opt1 = document.createElement('option'); opt1.value = idx; opt1.text = col.header;
-        let opt2 = document.createElement('option'); opt2.value = idx; opt2.text = col.header;
-        selX.add(opt1); selY.add(opt2);
-    });
-    
-    if(columns.length > 1) selY.selectedIndex = 1;
 
-    document.getElementById('bivariateModal').classList.remove('hidden');
+// ----------------------------------------------------
+// SISTEMA DE INTERFAZ: BIVARIADO (NUEVO)
+// ----------------------------------------------------
+let bivariate2DArray = []; let isBivDragging = false; let startBivCell = null; let lastBivClickedCell = null; let bivAutoScrollInterval = null;
+
+export function openBivariateModal(fileId) {
+    AppState.currentPreviewFileId = fileId;
+    AppState.tempBivariateX = [];
+    AppState.tempBivariateY = [];
+    document.getElementById('countX').innerText = 'Datos seleccionados: 0';
+    document.getElementById('countY').innerText = 'Datos seleccionados: 0';
+    document.getElementById('bivariateNameX').value = '';
+    document.getElementById('bivariateNameY').value = '';
+    
+    const fileObj = AppState.uploadedFilesMap.get(fileId);
+    document.getElementById('bivariateModalTitle').innerText = `Configurar Cruce Bivariado: ${fileObj.file.name}`;
+    updateBivariateRangeCount();
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+        bivariate2DArray = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
+        renderBivariateTable();
+        document.getElementById('bivariateModal').classList.remove('hidden');
+    };
+    reader.readAsArrayBuffer(fileObj.file);
 }
+
+function renderBivariateTable() {
+    const container = document.getElementById('bivariateTableContainer');
+    let html = '<table id="interactiveBivariateTable">';
+    bivariate2DArray.forEach((row, rIdx) => {
+        html += '<tr>'; row.forEach((cell, cIdx) => html += `<td data-r="${rIdx}" data-c="${cIdx}">${cell !== undefined ? cell : ''}</td>`); html += '</tr>';
+    });
+    container.innerHTML = html + '</table>';
+    
+    const table = document.getElementById('interactiveBivariateTable');
+    table.addEventListener('mousedown', (e) => {
+        if(e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved-x') || e.target.classList.contains('cell-saved-y')) return; 
+        isBivDragging = true; const r = parseInt(e.target.dataset.r), c = parseInt(e.target.dataset.c);
+        if (e.ctrlKey || e.metaKey) { e.target.classList.toggle('cell-selected'); lastBivClickedCell = {r, c}; startBivCell = null; } 
+        else if (e.shiftKey && lastBivClickedCell) { selectBivRange(lastBivClickedCell, {r, c}, true); } 
+        else { clearBivariateSelection(); e.target.classList.add('cell-selected'); startBivCell = {r, c}; lastBivClickedCell = {r, c}; }
+    });
+
+    table.addEventListener('mouseover', (e) => {
+        if(!isBivDragging || !startBivCell || e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved-x') || e.target.classList.contains('cell-saved-y')) return; 
+        selectBivRange(startBivCell, {r: parseInt(e.target.dataset.r), c: parseInt(e.target.dataset.c)}, true);
+    });
+
+    container.addEventListener('mousemove', (e) => {
+        if(!isBivDragging) return;
+        const rect = container.getBoundingClientRect(); const buffer = 40; let dx = 0, dy = 0;
+        if (e.clientX < rect.left + buffer) dx = -15; else if (e.clientX > rect.right - buffer) dx = 15;
+        if (e.clientY < rect.top + buffer) dy = -15; else if (e.clientY > rect.bottom - buffer) dy = 15;
+        if (dx !== 0 || dy !== 0) { if (!bivAutoScrollInterval) bivAutoScrollInterval = setInterval(() => { container.scrollLeft += dx; container.scrollTop += dy; }, 30); } 
+        else { clearInterval(bivAutoScrollInterval); bivAutoScrollInterval = null; }
+    });
+    window.addEventListener('mouseup', () => { isBivDragging = false; clearInterval(bivAutoScrollInterval); bivAutoScrollInterval = null; });
+}
+
+function selectBivRange(start, end, clearFirst) {
+    if(clearFirst) clearBivariateSelection();
+    const minR = Math.min(start.r, end.r), maxR = Math.max(start.r, end.r);
+    const minC = Math.min(start.c, end.c), maxC = Math.max(start.c, end.c);
+    for(let r = minR; r <= maxR; r++) for(let c = minC; c <= maxC; c++) {
+        const td = document.querySelector(`#interactiveBivariateTable td[data-r="${r}"][data-c="${c}"]`);
+        if(td && !td.classList.contains('cell-saved-x') && !td.classList.contains('cell-saved-y')) td.classList.add('cell-selected');
+    }
+}
+
+function clearBivariateSelection() { document.querySelectorAll('#interactiveBivariateTable .cell-selected').forEach(td => td.classList.remove('cell-selected')); }
+function updateBivariateRangeCount() { document.getElementById('bivariateRangeCount').innerText = `Cruces guardados: ${AppState.uploadedFilesMap.get(AppState.currentPreviewFileId).customRanges.length}/10`; }
+
 
 export function initUIListeners() {
     document.getElementById('prevBtn').addEventListener('click', () => { if (AppState.currentSlide > 0) { AppState.currentSlide--; document.getElementById('resultsCarousel').scrollTo({ left: document.getElementById('resultsCarousel').clientWidth * AppState.currentSlide, behavior: 'smooth' }); updateCarouselControls(); }});
@@ -277,40 +337,93 @@ export function initUIListeners() {
     document.getElementById('closeChartModalBtn').addEventListener('click', () => document.getElementById('chartModal').classList.add('hidden'));
     document.getElementById('clearSelectionBtn').addEventListener('click', clearSelection);
     
-    document.getElementById('closeBivariateModalBtn').addEventListener('click', () => document.getElementById('bivariateModal').classList.add('hidden'));
-    
-    document.getElementById('saveBivariateBtn').addEventListener('click', () => {
-        const fileObj = AppState.uploadedFilesMap.get(AppState.currentPreviewFileId);
-        const idxX = document.getElementById('bivariateXSelect').value;
-        const idxY = document.getElementById('bivariateYSelect').value;
-        
-        if(idxX === idxY) return alert("Por favor, selecciona dos variables DIFERENTES para poder cruzarlas.");
-        
-        const colX = AppState.currentExcelColumns[idxX];
-        const colY = AppState.currentExcelColumns[idxY];
-        
-        fileObj.customRanges.push({ type: 'bivariate_pair', colX, colY });
-        
-        alert(`Cruce guardado exitosamente.\nX: ${colX.header}\nY: ${colY.header}\n\nPresiona 'Procesar Datos' cuando estés listo.`);
-        document.getElementById('bivariateModal').classList.add('hidden');
-    });
-    
+    // Listeners Univariados
     document.getElementById('resetRangesBtn').addEventListener('click', () => {
         if(!confirm("¿Borrar todos los rangos guardados para este archivo?")) return;
-        AppState.uploadedFilesMap.get(AppState.currentPreviewFileId).customRanges = []; document.querySelectorAll('.cell-saved').forEach(td => td.classList.remove('cell-saved')); updateRangeCount();
+        AppState.uploadedFilesMap.get(AppState.currentPreviewFileId).customRanges = []; document.querySelectorAll('#interactiveTable .cell-saved').forEach(td => td.classList.remove('cell-saved')); updateRangeCount();
     });
 
     document.getElementById('saveRangeBtn').addEventListener('click', () => {
         const fileObj = AppState.uploadedFilesMap.get(AppState.currentPreviewFileId);
         if(fileObj.customRanges.length >= AppState.MAX_DATASETS) return alert("Máximo de rangos alcanzado para este archivo.");
-        const selected = document.querySelectorAll('.cell-selected'); if(selected.length === 0) return alert("Selecciona datos primero.");
+        const selected = document.querySelectorAll('#interactiveTable .cell-selected'); if(selected.length === 0) return alert("Selecciona datos primero.");
         let nums = []; selected.forEach(td => { let val = parseFloat(td.innerText); if(!isNaN(val)) nums.push(val); td.classList.remove('cell-selected'); td.classList.add('cell-saved'); });
         if(nums.length === 0) return alert("No hay números válidos en tu selección.");
         fileObj.customRanges.push(nums); updateRangeCount();
     });
-
     document.getElementById('finishRangesBtn').addEventListener('click', () => document.getElementById('previewModal').classList.add('hidden'));
 
+    // Listeners Bivariados
+    document.getElementById('closeBivariateModalBtn').addEventListener('click', () => document.getElementById('bivariateModal').classList.add('hidden'));
+    document.getElementById('clearBivariateSelectionBtn').addEventListener('click', clearBivariateSelection);
+    
+    document.getElementById('setRangeXBtn').addEventListener('click', () => {
+        const selected = document.querySelectorAll('#interactiveBivariateTable .cell-selected');
+        if(selected.length === 0) return alert("Selecciona celdas en la tabla primero.");
+        let temp = [];
+        selected.forEach(td => {
+            let val = td.innerText.trim();
+            if(val !== "") { temp.push(val); td.classList.remove('cell-selected'); td.classList.add('cell-saved-x'); }
+        });
+        AppState.tempBivariateX = temp;
+        document.getElementById('countX').innerText = `Datos seleccionados: ${temp.length}`;
+    });
+
+    document.getElementById('setRangeYBtn').addEventListener('click', () => {
+        const selected = document.querySelectorAll('#interactiveBivariateTable .cell-selected');
+        if(selected.length === 0) return alert("Selecciona celdas en la tabla primero.");
+        let temp = [];
+        selected.forEach(td => {
+            let val = td.innerText.trim();
+            if(val !== "") { temp.push(val); td.classList.remove('cell-selected'); td.classList.add('cell-saved-y'); }
+        });
+        AppState.tempBivariateY = temp;
+        document.getElementById('countY').innerText = `Datos seleccionados: ${temp.length}`;
+    });
+
+    document.getElementById('resetBivariateBtn').addEventListener('click', () => {
+        if(!confirm("¿Borrar todos los cruces guardados para este archivo?")) return;
+        AppState.uploadedFilesMap.get(AppState.currentPreviewFileId).customRanges = []; 
+        document.querySelectorAll('#interactiveBivariateTable .cell-saved-x').forEach(td => td.classList.remove('cell-saved-x'));
+        document.querySelectorAll('#interactiveBivariateTable .cell-saved-y').forEach(td => td.classList.remove('cell-saved-y'));
+        AppState.tempBivariateX = []; AppState.tempBivariateY = [];
+        document.getElementById('countX').innerText = 'Datos seleccionados: 0';
+        document.getElementById('countY').innerText = 'Datos seleccionados: 0';
+        updateBivariateRangeCount();
+    });
+
+    document.getElementById('saveBivariateBtn').addEventListener('click', () => {
+        if (AppState.tempBivariateX.length === 0 || AppState.tempBivariateY.length === 0) {
+            return alert("Debes asignar datos tanto para la Variable X como para la Variable Y.");
+        }
+        if (AppState.tempBivariateX.length !== AppState.tempBivariateY.length) {
+            return alert(`Los rangos no coinciden en tamaño. Has asignado ${AppState.tempBivariateX.length} datos a X, pero ${AppState.tempBivariateY.length} datos a Y.`);
+        }
+        
+        const nameX = document.getElementById('bivariateNameX').value.trim() || 'Variable X';
+        const nameY = document.getElementById('bivariateNameY').value.trim() || 'Variable Y';
+        const fileObj = AppState.uploadedFilesMap.get(AppState.currentPreviewFileId);
+        
+        fileObj.customRanges.push({
+            type: 'bivariate_pair',
+            colX: { header: nameX, data: [...AppState.tempBivariateX] },
+            colY: { header: nameY, data: [...AppState.tempBivariateY] }
+        });
+        
+        updateBivariateRangeCount();
+        
+        // Limpiamos memoria temporal para el siguiente cruce en el mismo archivo
+        AppState.tempBivariateX = []; AppState.tempBivariateY = [];
+        document.getElementById('countX').innerText = 'Datos seleccionados: 0';
+        document.getElementById('countY').innerText = 'Datos seleccionados: 0';
+        document.getElementById('bivariateNameX').value = '';
+        document.getElementById('bivariateNameY').value = '';
+        
+        alert(`Cruce guardado exitosamente.\n\nPuedes generar otro cruce con este archivo o presionar 'Cerrar' y luego procesar los datos.`);
+    });
+
+
+    // Tutor Matemático Univariado
     document.getElementById('floatingProcedureBtn').addEventListener('click', () => {
         const ds = AppState.globalDatasets[AppState.currentSlide]; 
         if(!ds || ds.type === 'bivariate') return;

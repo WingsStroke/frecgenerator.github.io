@@ -1,10 +1,11 @@
 export const AppState = {
-    analysisMode: 'univariate', // 'univariate' o 'bivariate'
+    analysisMode: 'univariate', 
     activeMethod: 'sturges',
     globalDatasets: [],
     uploadedFilesMap: new Map(),
     MAX_DATASETS: 10,
     currentSlide: 0,
     currentPreviewFileId: null,
-    currentExcelColumns: [] 
+    tempBivariateX: [],
+    tempBivariateY: []
 };
