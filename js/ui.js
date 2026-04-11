@@ -11,8 +11,8 @@ const miniChartOptions = { responsive: true, maintainAspectRatio: false, plugins
 
 function getChartConfig(ds, type) {
     const labels = ds.classesData.map(c => cleanNum(c.xi));
-    if (type === 'hist') return { data: { labels, datasets: [ { type: 'bar', label: 'Frecuencia (fi)', data: ds.classesData.map(c => c.fi), backgroundColor: 'rgba(0, 0, 0, 0.1)', borderColor: '#000', borderWidth: 1, barPercentage: 1, categoryPercentage: 1 }, { type: 'line', label: 'Polígono', data: ds.classesData.map(c => c.fi), borderColor: '#000', borderWidth: 2, tension: 0.1, fill: false, pointBackgroundColor: '#000' } ] } };
-    if (type === 'ojiva') return { type: 'line', data: { labels, datasets: [{ label: 'Ojiva (Hi %)', data: ds.classesData.map(c => c.Hi * 100), borderColor: '#000', borderWidth: 2, fill: true, backgroundColor: 'rgba(0, 0, 0, 0.05)', tension: 0.3 }] } };
+    if (type === 'hist') return { data: { labels, datasets: [ { type: 'bar', label: 'Frecuencia fi', data: ds.classesData.map(c => c.fi), backgroundColor: 'rgba(0, 0, 0, 0.1)', borderColor: '#000', borderWidth: 1, barPercentage: 1, categoryPercentage: 1 }, { type: 'line', label: 'Polígono', data: ds.classesData.map(c => c.fi), borderColor: '#000', borderWidth: 2, tension: 0.1, fill: false, pointBackgroundColor: '#000' } ] } };
+    if (type === 'ojiva') return { type: 'line', data: { labels, datasets: [{ label: 'Ojiva Hi %', data: ds.classesData.map(c => c.Hi * 100), borderColor: '#000', borderWidth: 2, fill: true, backgroundColor: 'rgba(0, 0, 0, 0.05)', tension: 0.3 }] } };
     if (type === 'box') return { type: 'boxplot', data: { labels: ['Distribución'], datasets: [{ label: ds.name, data: [ds.data], backgroundColor: 'rgba(0, 0, 0, 0.1)', borderColor: '#000', borderWidth: 2, itemRadius: 3, outlierBackgroundColor: '#000' }] } };
 }
 
@@ -30,7 +30,7 @@ window.openChartModal = function(dsIndex, chartType) {
 
     let titleText = ""; let options = { responsive: true, maintainAspectRatio: false };
     if (chartType === 'hist') { titleText = "Histograma y Polígono"; options.scales = { y: { beginAtZero: true } }; } 
-    else if (chartType === 'ojiva') { titleText = "Ojiva (Menor que)"; options.scales = { y: { beginAtZero: true, max: 100 } }; } 
+    else if (chartType === 'ojiva') { titleText = "Ojiva Menor que"; options.scales = { y: { beginAtZero: true, max: 100 } }; } 
     else if (chartType === 'box') { titleText = "Diagrama de Caja"; options.indexAxis = 'y'; options.plugins = { legend: { display: false } }; }
 
     document.getElementById('chartModalTitle').innerText = `${titleText} - ${ds.name}`;
@@ -53,16 +53,51 @@ export function renderCarousel() {
     const carousel = document.getElementById('resultsCarousel');
     carousel.innerHTML = ''; AppState.currentSlide = 0;
     let kFormula = AppState.activeMethod === 'sturges' ? 'k ≈ 1 + 3.322 · log₁₀(n)' : 'Manual';
-    let methodLabel = AppState.activeMethod === 'sturges' ? ' (Sturges)' : ' (Manual)';
+    let methodLabel = AppState.activeMethod === 'sturges' ? ' - Sturges' : ' - Manual';
 
     AppState.globalDatasets.forEach((ds, index) => {
         let block = document.createElement('div'); block.className = 'dataset-block';
+        // Los encabezados de la tabla MANTIENEN sus paréntesis como pediste
         let freqHtml = `<h3>Análisis ${index + 1}: ${ds.name}</h3><table><thead><tr><th>Límite Inf. (Li)</th><th>Límite Sup. (Ls)</th><th>Marca de Clase (Xi)</th><th>Frec. Abs. (fi)</th><th>Frec. Acum. (Fi)</th><th>Frec. Rel. (hi)</th><th>Frec. Rel. Acum. (Hi)</th></tr></thead><tbody>`;
         ds.classesData.forEach(c => { freqHtml += `<tr><td>${cleanNum(c.min)}</td><td>${cleanNum(c.max)}</td><td>${cleanNum(c.xi)}</td><td>${c.fi}</td><td>${c.Fi}</td><td>${cleanNum(c.hi)}</td><td>${cleanNum(c.Hi)}</td></tr>`; });
         freqHtml += `</tbody></table>`;
 
-        let statsHtml = `<div class="stats-grid"><div class="stat-card"><h3>Parámetros Base</h3>${createStatRow('Mínimo:', cleanNum(ds.minVal), 'min(xᵢ)')}${createStatRow('Máximo:', cleanNum(ds.maxVal), 'max(xᵢ)')}${createStatRow(`Intervalos (k)${methodLabel}:`, ds.numClasses, kFormula)}${createStatRow('Amplitud (A):', cleanNum(ds.amplitude), 'A = Rango / k')}</div><div class="stat-card"><h3>Tendencia Central</h3>${createStatRow('Media Arit.:', cleanNum(ds.stats.mean), 'x̄ = (Σxᵢ) / n')}${createStatRow('Media Geom.:', cleanNum(ds.stats.geoMean), 'MG = ⁿ√(x₁···xₙ)')}${createStatRow('Media Arm.:', cleanNum(ds.stats.harMean), 'MH = n / Σ(1/xᵢ)')}${createStatRow('Mediana:', cleanNum(ds.stats.median), 'Me = Lᵢ + A·[(n/2 - Fᵢ₋₁)/fᵢ]')}${createStatRow('Moda:', ds.stats.mode.map(m=>cleanNum(m)).join(','), 'Mo = Lᵢ + A·[(fᵢ - fᵢ₋₁)/(2fᵢ - fᵢ₋₁ - fᵢ₊₁)]')}</div><div class="stat-card"><h3>Dispersión y Forma</h3>${createStatRow('Rango:', cleanNum(ds.range), 'R = x_max - x_min')}${createStatRow('Varianza:', cleanNum(ds.stats.variance), 's² = Σ(xᵢ - x̄)² / (n - 1)')}${createStatRow('Desv. Est.:', cleanNum(ds.stats.stdDev), 's = √s²')}${createStatRow('C. Variación:', cleanNum(ds.stats.cv, 2) + '%', 'CV = (s/x̄)·100%')}${createStatRow('Asimetría:', cleanNum(ds.stats.skewness), 'As = [n/((n-1)(n-2))] · Σ[(xᵢ-x̄)/s]³')}</div><div class="stat-card"><h3>Posición (Percentiles)</h3>${createStatRow('P10 (10%):', cleanNum(ds.stats.p10), 'P₁₀ = Lᵢ + A·[(10n/100 - Fᵢ₋₁)/fᵢ]')}${createStatRow('Q1 (25%):', cleanNum(ds.stats.q1), 'Q₁')}${createStatRow('Q2 (50%):', cleanNum(ds.stats.q2), 'Q₂ = Mediana')}${createStatRow('Q3 (75%):', cleanNum(ds.stats.q3), 'Q₃')}${createStatRow('P90 (90%):', cleanNum(ds.stats.p90), 'P₉₀ = Lᵢ + A·[(90n/100 - Fᵢ₋₁)/fᵢ]')}</div></div>`;
-        let chartsHtml = `<div class="chart-accordion"><div class="accordion-item"><div class="accordion-header" onclick="toggleAccordion(this)"><span>Gráficos Estadísticos (Clic para ampliar)</span><span class="accordion-arrow">▼</span></div><div class="accordion-content"><div class="chart-grid"><div class="chart-item" onclick="openChartModal(${index}, 'hist')"><h4>Histograma</h4><div class="chart-canvas-wrapper"><canvas id="chartHist-${index}"></canvas></div></div><div class="chart-item" onclick="openChartModal(${index}, 'ojiva')"><h4>Ojiva</h4><div class="chart-canvas-wrapper"><canvas id="chartOjiva-${index}"></canvas></div></div><div class="chart-item" onclick="openChartModal(${index}, 'box')"><h4>Caja y Bigotes</h4><div class="chart-canvas-wrapper"><canvas id="chartBox-${index}"></canvas></div></div></div></div></div></div>`;
+        // Se eliminan los paréntesis de los textos y se agregan las fórmulas matemáticas a Q1 y Q3
+        let statsHtml = `<div class="stats-grid">
+            <div class="stat-card">
+                <h3>Parámetros Base</h3>
+                ${createStatRow('Mínimo:', cleanNum(ds.minVal), 'min(xᵢ)')}
+                ${createStatRow('Máximo:', cleanNum(ds.maxVal), 'max(xᵢ)')}
+                ${createStatRow(`Intervalos k${methodLabel}:`, ds.numClasses, kFormula)}
+                ${createStatRow('Amplitud A:', cleanNum(ds.amplitude), 'A = Rango / k')}
+            </div>
+            <div class="stat-card">
+                <h3>Tendencia Central</h3>
+                ${createStatRow('Media Aritmética:', cleanNum(ds.stats.mean), 'x̄ = (Σxᵢ) / n')}
+                ${createStatRow('Media Geométrica:', cleanNum(ds.stats.geoMean), 'MG = ⁿ√(x₁···xₙ)')}
+                ${createStatRow('Media Armónica:', cleanNum(ds.stats.harMean), 'MH = n / Σ(1/xᵢ)')}
+                ${createStatRow('Mediana:', cleanNum(ds.stats.median), 'Me = Lᵢ + A·[(n/2 - Fᵢ₋₁)/fᵢ]')}
+                ${createStatRow('Moda:', ds.stats.mode.map(m=>cleanNum(m)).join(','), 'Mo = Lᵢ + A·[(fᵢ - fᵢ₋₁)/(2fᵢ - fᵢ₋₁ - fᵢ₊₁)]')}
+            </div>
+            <div class="stat-card">
+                <h3>Dispersión y Forma</h3>
+                ${createStatRow('Rango:', cleanNum(ds.range), 'R = x_max - x_min')}
+                ${createStatRow('Varianza:', cleanNum(ds.stats.variance), 's² = Σ(xᵢ - x̄)² / (n - 1)')}
+                ${createStatRow('Desviación Estándar:', cleanNum(ds.stats.stdDev), 's = √s²')}
+                ${createStatRow('Coeficiente Variación:', cleanNum(ds.stats.cv, 2) + '%', 'CV = (s/x̄)·100%')}
+                ${createStatRow('Asimetría:', cleanNum(ds.stats.skewness), 'As = [n/((n-1)(n-2))] · Σ[(xᵢ-x̄)/s]³')}
+            </div>
+            <div class="stat-card">
+                <h3>Posición</h3>
+                ${createStatRow('Percentil 10:', cleanNum(ds.stats.p10), 'P₁₀ = Lᵢ + A·[(10n/100 - Fᵢ₋₁)/fᵢ]')}
+                ${createStatRow('Cuartil 1:', cleanNum(ds.stats.q1), 'Q₁ = Lᵢ + A·[(n/4 - Fᵢ₋₁)/fᵢ]')}
+                ${createStatRow('Cuartil 2:', cleanNum(ds.stats.q2), 'Q₂ = Mediana')}
+                ${createStatRow('Cuartil 3:', cleanNum(ds.stats.q3), 'Q₃ = Lᵢ + A·[(3n/4 - Fᵢ₋₁)/fᵢ]')}
+                ${createStatRow('Percentil 90:', cleanNum(ds.stats.p90), 'P₉₀ = Lᵢ + A·[(90n/100 - Fᵢ₋₁)/fᵢ]')}
+            </div>
+        </div>`;
+
+        let chartsHtml = `<div class="chart-accordion"><div class="accordion-item"><div class="accordion-header" onclick="toggleAccordion(this)"><span>Gráficos Estadísticos - Clic para ampliar</span><span class="accordion-arrow">▼</span></div><div class="accordion-content"><div class="chart-grid"><div class="chart-item" onclick="openChartModal(${index}, 'hist')"><h4>Histograma</h4><div class="chart-canvas-wrapper"><canvas id="chartHist-${index}"></canvas></div></div><div class="chart-item" onclick="openChartModal(${index}, 'ojiva')"><h4>Ojiva</h4><div class="chart-canvas-wrapper"><canvas id="chartOjiva-${index}"></canvas></div></div><div class="chart-item" onclick="openChartModal(${index}, 'box')"><h4>Caja y Bigotes</h4><div class="chart-canvas-wrapper"><canvas id="chartBox-${index}"></canvas></div></div></div></div></div></div>`;
 
         block.innerHTML = freqHtml + statsHtml + chartsHtml; carousel.appendChild(block);
         setTimeout(() => renderChartsForDataset(ds, index), 0);
@@ -166,29 +201,59 @@ export function initUIListeners() {
 
     document.getElementById('finishRangesBtn').addEventListener('click', () => document.getElementById('previewModal').classList.add('hidden'));
 
-    // Procedimiento
+    // NUEVO: Procedimiento Tutor 100% Completo
     document.getElementById('floatingProcedureBtn').addEventListener('click', () => {
         const ds = AppState.globalDatasets[AppState.currentSlide]; 
-        document.getElementById('procedureModalTitle').innerText = `Procedimiento: ${ds.name}`;
+        document.getElementById('procedureModalTitle').innerText = `Procedimiento Completo: ${ds.name}`;
+        
         let isSturges = AppState.activeMethod === 'sturges';
+        let firstRow = ds.classesData[0] || {};
         
         document.getElementById('procedureContent').innerHTML = `
             <div class="procedure-step">
-                <h3>1. Creación de la Tabla</h3>
-                <div class="math-formula">Rango (R) = ${cleanNum(ds.maxVal)} - ${cleanNum(ds.minVal)} = <span class="math-highlight">${cleanNum(ds.range)}</span></div>
-                <div class="math-formula">Intervalos (k) ${isSturges ? `≈ 1 + 3.322 * log₁₀(${ds.n}) = ` : 'Manual = '} <span class="math-highlight">${ds.numClasses}</span></div>
-                <div class="math-formula">Amplitud (A) = ${cleanNum(ds.range)} / ${ds.numClasses} = <span class="math-highlight">${cleanNum(ds.amplitude)}</span></div>
+                <h3>1. Parámetros Base para la Tabla</h3>
+                <div class="math-formula">Rango R = ${cleanNum(ds.maxVal)} - ${cleanNum(ds.minVal)} = <span class="math-highlight">${cleanNum(ds.range)}</span></div>
+                <div class="math-formula">Intervalos k ${isSturges ? `≈ 1 + 3.322 * log₁₀(${ds.n}) = ` : 'Manual = '} <span class="math-highlight">${ds.numClasses}</span></div>
+                <div class="math-formula">Amplitud A = ${cleanNum(ds.range)} / ${ds.numClasses} = <span class="math-highlight">${cleanNum(ds.amplitude)}</span></div>
             </div>
+
             <div class="procedure-step">
-                <h3>2. Medidas Centrales</h3>
-                <div class="math-formula">Media Aritmética (x̄) = ${cleanNum(ds.stats.sum)} / ${ds.n} = <span class="math-highlight">${cleanNum(ds.stats.mean)}</span></div>
-                <div class="math-formula">Mediana (Me) = <span class="math-highlight">${cleanNum(ds.stats.median)}</span></div>
+                <h3>2. Construcción de la Tabla (Ejemplo 1ra Fila)</h3>
+                <p>Usando la amplitud, formamos los intervalos y variables de la tabla:</p>
+                <div class="math-formula">Límite Inferior Li = Mínimo = <span class="math-highlight">${cleanNum(firstRow.min)}</span></div>
+                <div class="math-formula">Límite Superior Ls = Li + A = ${cleanNum(firstRow.min)} + ${cleanNum(ds.amplitude)} = <span class="math-highlight">${cleanNum(firstRow.max)}</span></div>
+                <div class="math-formula">Marca de Clase Xi = (Li + Ls) / 2 = <span class="math-highlight">${cleanNum(firstRow.xi)}</span></div>
+                <div class="math-formula">Frec. Absoluta fi = Recuento de datos en el intervalo = <span class="math-highlight">${firstRow.fi}</span></div>
+                <div class="math-formula">Frec. Acumulada Fi = Suma de frecuencias = <span class="math-highlight">${firstRow.Fi}</span></div>
+                <div class="math-formula">Frec. Relativa hi = fi / n = ${firstRow.fi} / ${ds.n} = <span class="math-highlight">${cleanNum(firstRow.hi)}</span></div>
+                <div class="math-formula">Frec. Rel. Acumulada Hi = Fi / n = <span class="math-highlight">${cleanNum(firstRow.Hi)}</span></div>
             </div>
+
             <div class="procedure-step">
-                <h3>3. Dispersión</h3>
-                <div class="math-formula">Varianza (s²) = ${cleanNum(ds.stats.varianceSum)} / (${ds.n} - 1) = <span class="math-highlight">${cleanNum(ds.stats.variance)}</span></div>
-                <div class="math-formula">Desv. Estándar (s) = √${cleanNum(ds.stats.variance)} = <span class="math-highlight">${cleanNum(ds.stats.stdDev)}</span></div>
-                <div class="math-formula">C. Variación (CV) = (${cleanNum(ds.stats.stdDev)} / ${cleanNum(ds.stats.mean)}) * 100% = <span class="math-highlight">${cleanNum(ds.stats.cv, 2)}%</span></div>
+                <h3>3. Medidas de Tendencia Central</h3>
+                <div class="math-formula">Media Aritmética x̄ = ${cleanNum(ds.stats.sum)} / ${ds.n} = <span class="math-highlight">${cleanNum(ds.stats.mean)}</span></div>
+                <div class="math-formula">Media Geométrica MG = ⁿ√(x₁···xₙ) = <span class="math-highlight">${cleanNum(ds.stats.geoMean)}</span></div>
+                <div class="math-formula">Media Armónica MH = n / Σ(1/xᵢ) = <span class="math-highlight">${cleanNum(ds.stats.harMean)}</span></div>
+                <div class="math-formula">Mediana Me = Posición central de los datos ordenados = <span class="math-highlight">${cleanNum(ds.stats.median)}</span></div>
+                <div class="math-formula">Moda Mo = Valor o valores más frecuentes = <span class="math-highlight">${ds.stats.mode.map(m=>cleanNum(m)).join(', ')}</span></div>
+            </div>
+            
+            <div class="procedure-step">
+                <h3>4. Medidas de Posición</h3>
+                <p><i>Nota: Calculadas usando interpolación exacta sobre el arreglo de datos.</i></p>
+                <div class="math-formula">Percentil 10 P₁₀ = <span class="math-highlight">${cleanNum(ds.stats.p10)}</span></div>
+                <div class="math-formula">Cuartil 1 Q₁ = <span class="math-highlight">${cleanNum(ds.stats.q1)}</span></div>
+                <div class="math-formula">Cuartil 2 Q₂ (Mediana) = <span class="math-highlight">${cleanNum(ds.stats.q2)}</span></div>
+                <div class="math-formula">Cuartil 3 Q₃ = <span class="math-highlight">${cleanNum(ds.stats.q3)}</span></div>
+                <div class="math-formula">Percentil 90 P₉₀ = <span class="math-highlight">${cleanNum(ds.stats.p90)}</span></div>
+            </div>
+
+            <div class="procedure-step">
+                <h3>5. Medidas de Dispersión y Forma</h3>
+                <div class="math-formula">Varianza s² = ${cleanNum(ds.stats.varianceSum)} / (${ds.n} - 1) = <span class="math-highlight">${cleanNum(ds.stats.variance)}</span></div>
+                <div class="math-formula">Desv. Estándar s = √${cleanNum(ds.stats.variance)} = <span class="math-highlight">${cleanNum(ds.stats.stdDev)}</span></div>
+                <div class="math-formula">C. Variación CV = (${cleanNum(ds.stats.stdDev)} / ${cleanNum(ds.stats.mean)}) * 100% = <span class="math-highlight">${cleanNum(ds.stats.cv, 2)}%</span></div>
+                <div class="math-formula">Asimetría As = [n/((n-1)(n-2))] · Σ[(xᵢ-x̄)/s]³ = <span class="math-highlight">${cleanNum(ds.stats.skewness)}</span></div>
             </div>
         `;
         document.getElementById('procedureModal').classList.remove('hidden');
