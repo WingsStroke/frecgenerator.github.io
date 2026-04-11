@@ -94,10 +94,9 @@ document.getElementById('processBtn').addEventListener('click', async () => {
 
 document.getElementById('exportBtn').addEventListener('click', () => exportAllToExcel(AppState.globalDatasets, AppState.activeMethod));
 
-// NUEVO EVENTO PARA PDF
 document.getElementById('exportPdfBtn').addEventListener('click', () => {
     const currentDataset = AppState.globalDatasets[AppState.currentSlide];
     if(currentDataset) {
-        exportToPDF(currentDataset, AppState.currentSlide);
+        exportToPDF(currentDataset);
     }
 });

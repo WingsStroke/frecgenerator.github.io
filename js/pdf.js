@@ -1,128 +1,168 @@
 import { cleanNum } from './math.js';
 
-export async function exportToPDF(dataset, slideIndex) {
-    // Creamos un contenedor virtual con un ancho fijo para evitar deformaciones
-    const element = document.createElement('div');
-    element.style.padding = '20px';
-    element.style.fontFamily = 'Arial, Helvetica, sans-serif';
-    element.style.color = '#000';
-    element.style.backgroundColor = '#fff';
-    element.style.width = '800px'; 
-    element.style.margin = '0 auto';
+// Función auxiliar para configurar los gráficos de la misma forma que en ui.js
+function getChartConfig(ds, type) {
+    const labels = ds.classesData.map(c => cleanNum(c.xi));
+    if (type === 'hist') return { type: 'bar', data: { labels, datasets: [ { type: 'bar', label: 'Frecuencia fi', data: ds.classesData.map(c => c.fi), backgroundColor: 'rgba(0, 0, 0, 0.1)', borderColor: '#000', borderWidth: 1, barPercentage: 1, categoryPercentage: 1 }, { type: 'line', label: 'Polígono', data: ds.classesData.map(c => c.fi), borderColor: '#000', borderWidth: 2, tension: 0.1, fill: false, pointBackgroundColor: '#000' } ] } };
+    if (type === 'ojiva') return { type: 'line', data: { labels, datasets: [{ label: 'Ojiva Hi %', data: ds.classesData.map(c => c.Hi * 100), borderColor: '#000', borderWidth: 2, fill: true, backgroundColor: 'rgba(0, 0, 0, 0.05)', tension: 0.3 }] } };
+    if (type === 'box') return { type: 'boxplot', data: { labels: ['Distribución'], datasets: [{ label: ds.name, data: [ds.data], backgroundColor: 'rgba(0, 0, 0, 0.1)', borderColor: '#000', borderWidth: 2, itemRadius: 3, outlierBackgroundColor: '#000' }] } };
+}
 
-    let html = `
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-            <h1 style="text-transform: uppercase; font-size: 22px; margin: 0; color: #000;">Reporte Estadístico: ${dataset.name}</h1>
-            <p style="color: #555; margin: 5px 0 0 0; font-size: 12px;">Generado por el Generador de Tablas de Frecuencia</p>
-        </div>
+// Renderiza el gráfico en un canvas invisible para garantizar 100% de calidad
+async function captureChartBase64(dataset, chartType) {
+    return new Promise((resolve) => {
+        const container = document.createElement('div');
+        container.style.width = '1000px';
+        container.style.height = '500px';
+        container.style.position = 'absolute';
+        container.style.left = '-9999px'; // Lo escondemos fuera de la pantalla
+        document.body.appendChild(container);
+
+        const canvas = document.createElement('canvas');
+        container.appendChild(canvas);
         
-        <h3 style="border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 16px; margin-top: 0;">1. Tabla de Frecuencias ${dataset.isGrouped ? '(Agrupados)' : '(Simples)'}</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; text-align: center; font-size: 12px;">
-            <thead>
-                <tr style="background-color: #f0f0f0; border: 1px solid #000; page-break-inside: avoid;">
-    `;
-    
-    if (dataset.isGrouped) {
-        html += `<th style="padding: 6px; border: 1px solid #000;">Límite Inf. (Li)</th><th style="padding: 6px; border: 1px solid #000;">Límite Sup. (Ls)</th><th style="padding: 6px; border: 1px solid #000;">Marca Clase (Xi)</th>`;
-    } else {
-        html += `<th style="padding: 6px; border: 1px solid #000;">Dato (Xi)</th>`;
-    }
-    
-    html += `<th style="padding: 6px; border: 1px solid #000;">Frec. Abs. (fi)</th><th style="padding: 6px; border: 1px solid #000;">Frec. Acum. (Fi)</th><th style="padding: 6px; border: 1px solid #000;">Frec. Rel. (hi)</th><th style="padding: 6px; border: 1px solid #000;">Frec. Rel. Acum. (Hi)</th></tr></thead><tbody>`;
-    
-    dataset.classesData.forEach(c => {
-        // Evitamos que una fila de la tabla se corte a la mitad entre dos páginas
-        html += `<tr style="page-break-inside: avoid;">`;
-        if (dataset.isGrouped) {
-            html += `<td style="padding: 5px; border: 1px solid #000;">${cleanNum(c.min)}</td><td style="padding: 5px; border: 1px solid #000;">${cleanNum(c.max)}</td>`;
-        }
-        html += `<td style="padding: 5px; border: 1px solid #000;">${cleanNum(c.xi)}</td><td style="padding: 5px; border: 1px solid #000;">${c.fi}</td><td style="padding: 5px; border: 1px solid #000;">${c.Fi}</td><td style="padding: 5px; border: 1px solid #000;">${cleanNum(c.hi)}</td><td style="padding: 5px; border: 1px solid #000;">${cleanNum(c.Hi)}</td></tr>`;
+        const config = getChartConfig(dataset, chartType);
+        config.options = {
+            responsive: false,
+            animation: false, // Fundamental: desactiva la animación para capturar al instante
+            plugins: { legend: { display: false } }
+        };
+        
+        if(chartType === 'box') config.options.indexAxis = 'y';
+        if(chartType === 'hist') config.options.scales = { y: { beginAtZero: true } };
+        if(chartType === 'ojiva') config.options.scales = { y: { beginAtZero: true, max: 100 } };
+        
+        const chart = new Chart(canvas, config);
+        
+        // Damos un pequeñísimo margen para que el navegador pinte el canvas
+        setTimeout(() => {
+            const base64 = canvas.toDataURL('image/png', 1.0);
+            chart.destroy();
+            document.body.removeChild(container);
+            resolve(base64);
+        }, 150);
     });
-    html += `</tbody></table>`;
+}
 
-    // Usamos una estructura de <table> tradicional en lugar de flexbox para las estadísticas
-    // Esto garantiza un renderizado perfecto y alineado en PDF
-    html += `
-        <div style="page-break-inside: avoid; margin-bottom: 25px;">
-            <h3 style="border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 16px; margin-top: 0;">2. Medidas Estadísticas</h3>
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 13px; text-align: left;">
-                <tr>
-                    <td style="padding: 15px; width: 50%; vertical-align: top; border-right: 1px solid #000;">
-                        <p style="margin:4px 0;"><b>Total de datos (n):</b> ${dataset.n}</p>
-                        <p style="margin:4px 0;"><b>Mínimo:</b> ${cleanNum(dataset.minVal)}</p>
-                        <p style="margin:4px 0;"><b>Máximo:</b> ${cleanNum(dataset.maxVal)}</p>
-                        <p style="margin:4px 0;"><b>Rango:</b> ${cleanNum(dataset.range)}</p>
-                        <hr style="border: 0; border-top: 1px dashed #ccc; margin: 12px 0;">
-                        <p style="margin:4px 0;"><b>Media Aritmética:</b> ${cleanNum(dataset.stats.mean)}</p>
-                        <p style="margin:4px 0;"><b>Mediana:</b> ${cleanNum(dataset.stats.median)}</p>
-                        <p style="margin:4px 0;"><b>Moda:</b> ${dataset.stats.mode.map(m=>cleanNum(m)).join(', ')}</p>
-                    </td>
-                    <td style="padding: 15px; width: 50%; vertical-align: top;">
-                        <p style="margin:4px 0;"><b>Varianza:</b> ${cleanNum(dataset.stats.variance)}</p>
-                        <p style="margin:4px 0;"><b>Desviación Estándar:</b> ${cleanNum(dataset.stats.stdDev)}</p>
-                        <p style="margin:4px 0;"><b>Coeficiente Variación:</b> ${cleanNum(dataset.stats.cv, 2)}%</p>
-                        <p style="margin:4px 0;"><b>Asimetría:</b> ${cleanNum(dataset.stats.skewness)}</p>
-                        <hr style="border: 0; border-top: 1px dashed #ccc; margin: 12px 0;">
-                        <p style="margin:4px 0;"><b>Cuartil 1 (Q1):</b> ${cleanNum(dataset.stats.q1)}</p>
-                        <p style="margin:4px 0;"><b>Cuartil 2 (Q2):</b> ${cleanNum(dataset.stats.q2)}</p>
-                        <p style="margin:4px 0;"><b>Cuartil 3 (Q3):</b> ${cleanNum(dataset.stats.q3)}</p>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    `;
-
-    const histCanvas = document.getElementById(`chartHist-${slideIndex}`);
-    const ojivaCanvas = document.getElementById(`chartOjiva-${slideIndex}`);
-    const boxCanvas = document.getElementById(`chartBox-${slideIndex}`);
-
-    html += `<h3 style="border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 15px; font-size: 16px;">3. Gráficos Estadísticos</h3>`;
-    html += `<div style="text-align: center;">`;
-    
-    // Encapsulamos CADA gráfico en un div "avoid" para que fluyan naturalmente
-    // Restringimos estrictamente la altura máxima a 240px
-    if (histCanvas) {
-        html += `<div style="page-break-inside: avoid; margin-bottom: 25px;">
-                    <h4 style="margin: 0 0 8px 0; font-size: 14px; text-transform: uppercase; color: #333;">Histograma y Polígono de Frecuencias</h4>
-                    <img src="${histCanvas.toDataURL('image/png', 1.0)}" style="width: 85%; max-height: 240px; object-fit: contain; border: 1px solid #ddd; padding: 10px;">
-                 </div>`;
-    }
-    if (ojivaCanvas) {
-        html += `<div style="page-break-inside: avoid; margin-bottom: 25px;">
-                    <h4 style="margin: 0 0 8px 0; font-size: 14px; text-transform: uppercase; color: #333;">Ojiva (Menor que)</h4>
-                    <img src="${ojivaCanvas.toDataURL('image/png', 1.0)}" style="width: 85%; max-height: 240px; object-fit: contain; border: 1px solid #ddd; padding: 10px;">
-                 </div>`;
-    }
-    if (boxCanvas) {
-        html += `<div style="page-break-inside: avoid; margin-bottom: 25px;">
-                    <h4 style="margin: 0 0 8px 0; font-size: 14px; text-transform: uppercase; color: #333;">Diagrama de Caja y Bigotes</h4>
-                    <img src="${boxCanvas.toDataURL('image/png', 1.0)}" style="width: 85%; max-height: 240px; object-fit: contain; border: 1px solid #ddd; padding: 10px;">
-                 </div>`;
-    }
-    
-    html += `</div>`;
-    element.innerHTML = html;
-
-    // Configuración robusta para html2pdf
-    const opt = {
-        margin:       [15, 10, 15, 10], // Margen: [arriba, derecha, abajo, izquierda]
-        filename:     `Reporte_Estadistico_${dataset.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { 
-            scale: 2, 
-            useCORS: true, 
-            windowWidth: 800 // Forzamos un renderizado de 800px de ancho real
-        },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
+export async function exportToPDF(dataset) {
     const btn = document.getElementById('exportPdfBtn');
     const originalText = btn.innerText;
     btn.innerText = 'Generando Reporte...';
     btn.disabled = true;
 
-    html2pdf().set(opt).from(element).save().then(() => {
+    try {
+        // 1. Tomar capturas perfectas en segundo plano
+        const imgHist = await captureChartBase64(dataset, 'hist');
+        const imgOjiva = await captureChartBase64(dataset, 'ojiva');
+        const imgBox = await captureChartBase64(dataset, 'box');
+
+        // 2. Inicializar jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // TÍTULO
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text(`REPORTE ESTADÍSTICO: ${dataset.name.toUpperCase()}`, 105, 20, { align: 'center' });
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text('Generado por el Generador de Tablas de Frecuencia', 105, 26, { align: 'center' });
+        doc.setTextColor(0);
+
+        // 3. TABLA DE FRECUENCIAS (Usando AutoTable)
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`1. Tabla de Frecuencias ${dataset.isGrouped ? '(Datos Agrupados)' : '(Frecuencias Simples)'}`, 14, 40);
+
+        const tableHead = dataset.isGrouped 
+            ? [['Límite Inf.', 'Límite Sup.', 'Marca Clase', 'Frec. Abs.', 'Frec. Acum.', 'Frec. Rel.', 'Frec. Rel. Acum.']]
+            : [['Dato (Xi)', 'Frec. Abs. (fi)', 'Frec. Acum. (Fi)', 'Frec. Rel. (hi)', 'Frec. Rel. Acum. (Hi)']];
+            
+        const tableBody = dataset.classesData.map(c => {
+            if (dataset.isGrouped) {
+                return [cleanNum(c.min), cleanNum(c.max), cleanNum(c.xi), c.fi, c.Fi, cleanNum(c.hi), cleanNum(c.Hi)];
+            } else {
+                return [cleanNum(c.xi), c.fi, c.Fi, cleanNum(c.hi), cleanNum(c.Hi)];
+            }
+        });
+
+        doc.autoTable({
+            startY: 45,
+            head: tableHead,
+            body: tableBody,
+            theme: 'grid',
+            headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], halign: 'center' },
+            bodyStyles: { halign: 'center' },
+            margin: { left: 14, right: 14 }
+        });
+
+        // 4. MEDIDAS ESTADÍSTICAS (Usando AutoTable en formato columna)
+        let finalY = doc.lastAutoTable.finalY + 15;
+        if (finalY > 230) { doc.addPage(); finalY = 20; }
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('2. Medidas Estadísticas', 14, finalY);
+        
+        const statsData = [
+            ['Total de datos (n):', dataset.n, 'Varianza:', cleanNum(dataset.stats.variance)],
+            ['Mínimo:', cleanNum(dataset.minVal), 'Desviación Estándar:', cleanNum(dataset.stats.stdDev)],
+            ['Máximo:', cleanNum(dataset.maxVal), 'Coeficiente Variación:', `${cleanNum(dataset.stats.cv, 2)}%`],
+            ['Rango:', cleanNum(dataset.range), 'Asimetría:', cleanNum(dataset.stats.skewness)],
+            ['Media Aritmética:', cleanNum(dataset.stats.mean), 'Cuartil 1 (Q1):', cleanNum(dataset.stats.q1)],
+            ['Mediana:', cleanNum(dataset.stats.median), 'Cuartil 2 (Q2):', cleanNum(dataset.stats.q2)],
+            ['Moda:', dataset.stats.mode.map(m=>cleanNum(m)).join(', '), 'Cuartil 3 (Q3):', cleanNum(dataset.stats.q3)]
+        ];
+
+        doc.autoTable({
+            startY: finalY + 5,
+            body: statsData,
+            theme: 'plain',
+            styles: { cellPadding: 2, fontSize: 10 },
+            columnStyles: { 
+                0: { fontStyle: 'bold', halign: 'right', cellWidth: 45 }, 
+                1: { halign: 'left', cellWidth: 45 },
+                2: { fontStyle: 'bold', halign: 'right', cellWidth: 45 },
+                3: { halign: 'left', cellWidth: 45 }
+            }
+        });
+
+        // 5. INYECCIÓN DE GRÁFICOS
+        doc.addPage();
+        let currentY = 20;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('3. Gráficos Estadísticos', 14, currentY);
+        currentY += 15;
+
+        // Inyectar Histograma
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Histograma y Polígono de Frecuencias', 105, currentY, { align: 'center' });
+        doc.addImage(imgHist, 'PNG', 15, currentY + 5, 180, 90);
+        currentY += 110;
+
+        // Inyectar Ojiva
+        if (currentY > 180) { doc.addPage(); currentY = 20; }
+        doc.text('Ojiva (Menor que)', 105, currentY, { align: 'center' });
+        doc.addImage(imgOjiva, 'PNG', 15, currentY + 5, 180, 90);
+        currentY += 110;
+
+        // Inyectar Boxplot
+        if (currentY > 180) { doc.addPage(); currentY = 20; }
+        doc.text('Diagrama de Caja y Bigotes', 105, currentY, { align: 'center' });
+        doc.addImage(imgBox, 'PNG', 15, currentY + 5, 180, 90);
+
+        // Guardar Archivo
+        doc.save(`Reporte_Estadistico_${dataset.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
+
+    } catch (error) {
+        console.error("Error generando PDF:", error);
+        alert("Hubo un error al generar el PDF. Revisa la consola.");
+    } finally {
         btn.innerText = originalText;
         btn.disabled = false;
-    });
+    }
 }
