@@ -27,31 +27,48 @@ export async function exportAllToExcel(globalDatasets, activeMethod) {
         
         const dataRange = `'D_${idx+1}_${shortName}'!A2:A${ds.n + 1}`;
         const ws = wb.addWorksheet(`A_${idx+1}_${shortName}`);
-        // Los encabezados de la tabla conservan los paréntesis (Li, Ls, etc.)
-        ws.addRow(['LÍMITE INF. (LI)', 'LÍMITE SUP. (LS)', 'MARCA DE CLASE (XI)', 'FREC. ABS (FI)', 'FREC. ACUM (FI)', 'FREC. REL (HI)', 'FREC. REL ACUM (HI)']);
-        ws.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
+        
+        // REGLAS PARA TABLAS AGRUPADAS VS NO AGRUPADAS EN EXCEL
+        if (ds.isGrouped) {
+            ws.addRow(['LÍMITE INF. (LI)', 'LÍMITE SUP. (LS)', 'MARCA DE CLASE (XI)', 'FREC. ABS (FI)', 'FREC. ACUM (FI)', 'FREC. REL (HI)', 'FREC. REL ACUM (HI)']);
+            ws.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
 
-        ds.classesData.forEach((cls, i) => {
-            let rowNum = i + 2, cond = cls.isLast ? "<=" : "<";
-            ws.addRow([
-                cls.min, cls.max, { formula: `(A${rowNum}+B${rowNum})/2`, result: cls.xi },
-                { formula: `COUNTIFS(${dataRange},">="&A${rowNum},${dataRange},"${cond}"&B${rowNum})`, result: cls.fi },
-                i === 0 ? { formula: `D2`, result: cls.Fi } : { formula: `E${rowNum - 1}+D${rowNum}`, result: cls.Fi },
-                { formula: `D${rowNum}/COUNT(${dataRange})`, result: cls.hi },
-                i === 0 ? { formula: `F2`, result: cls.Hi } : { formula: `G${rowNum - 1}+F${rowNum}`, result: cls.Hi }
-            ]).eachCell(cell => cell.alignment = { horizontal: 'center' });
-        });
+            ds.classesData.forEach((cls, i) => {
+                let rowNum = i + 2, cond = cls.isLast ? "<=" : "<";
+                ws.addRow([
+                    cls.min, cls.max, { formula: `(A${rowNum}+B${rowNum})/2`, result: cls.xi },
+                    { formula: `COUNTIFS(${dataRange},">="&A${rowNum},${dataRange},"${cond}"&B${rowNum})`, result: cls.fi },
+                    i === 0 ? { formula: `D2`, result: cls.Fi } : { formula: `E${rowNum - 1}+D${rowNum}`, result: cls.Fi },
+                    { formula: `D${rowNum}/COUNT(${dataRange})`, result: cls.hi },
+                    i === 0 ? { formula: `F2`, result: cls.Hi } : { formula: `G${rowNum - 1}+F${rowNum}`, result: cls.Hi }
+                ]).eachCell(cell => cell.alignment = { horizontal: 'center' });
+            });
+            for(let c = 1; c <= 8; c++) ws.getColumn(c).width = 20;
+        } else {
+            ws.addRow(['DATO (XI)', 'FREC. ABS (FI)', 'FREC. ACUM (FI)', 'FREC. REL (HI)', 'FREC. REL ACUM (HI)']);
+            ws.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
 
-        for(let c = 1; c <= 8; c++) ws.getColumn(c).width = 20;
+            ds.classesData.forEach((cls, i) => {
+                let rowNum = i + 2;
+                ws.addRow([
+                    cls.xi,
+                    { formula: `COUNTIF(${dataRange},A${rowNum})`, result: cls.fi },
+                    i === 0 ? { formula: `B2`, result: cls.Fi } : { formula: `C${rowNum - 1}+B${rowNum}`, result: cls.Fi },
+                    { formula: `B${rowNum}/COUNT(${dataRange})`, result: cls.hi },
+                    i === 0 ? { formula: `D2`, result: cls.Hi } : { formula: `E${rowNum - 1}+D${rowNum}`, result: cls.Hi }
+                ]).eachCell(cell => cell.alignment = { horizontal: 'center' });
+            });
+            for(let c = 1; c <= 5; c++) ws.getColumn(c).width = 20;
+        }
 
         let startRow = ds.numClasses + 4;
         ws.getCell(`A${startRow}`).value = "PARÁMETROS"; ws.getCell(`C${startRow}`).value = "TENDENCIA C."; ws.getCell(`E${startRow}`).value = "DISPERSIÓN"; ws.getCell(`G${startRow}`).value = "POSICIÓN";
         [ws.getCell(`A${startRow}`), ws.getCell(`C${startRow}`), ws.getCell(`E${startRow}`), ws.getCell(`G${startRow}`)].forEach(c => { c.font = { bold: true }; c.border = { bottom: { style: 'medium' } }; });
 
-        let formulaK = activeMethod === 'sturges' ? `ROUND(1+3.322*LOG10(COUNT(${dataRange})),0)` : ds.numClasses;
-        let filaK = startRow + 4, formAmp = `(MAX(${dataRange})-MIN(${dataRange}))/B${filaK}`;
+        let formulaK = ds.isGrouped ? (activeMethod === 'sturges' ? `ROUND(1+3.322*LOG10(COUNT(${dataRange})),0)` : ds.numClasses) : "N/A";
+        let filaK = startRow + 4; 
+        let formAmp = ds.isGrouped ? `(MAX(${dataRange})-MIN(${dataRange}))/B${filaK}` : "N/A";
 
-        // Se eliminan los paréntesis de los nombres de los parámetros
         const statsGrid = [
             { c1: 'A', l1: 'Mínimo:', f1: `MIN(${dataRange})`, c2: 'C', l2: 'Media Aritmética:', f2: `AVERAGE(${dataRange})`, c3: 'E', l3: 'Rango:', f3: `MAX(${dataRange})-MIN(${dataRange})`, c4: 'G', l4: 'Percentil 10:', f4: `PERCENTILE(${dataRange}, 0.1)` },
             { c1: 'A', l1: 'Máximo:', f1: `MAX(${dataRange})`, c2: 'C', l2: 'Media Geométrica:', f2: `GEOMEAN(${dataRange})`, c3: 'E', l3: 'Varianza:', f3: `VAR(${dataRange})`, c4: 'G', l4: 'Cuartil 1:', f4: `QUARTILE(${dataRange}, 1)` },
@@ -62,7 +79,7 @@ export async function exportAllToExcel(globalDatasets, activeMethod) {
 
         statsGrid.forEach((st, i) => {
             let r = startRow + 2 + i;
-            if(st.l1) { ws.getCell(`${st.c1}${r}`).value = st.l1; ws.getCell(`B${r}`).value = (st.c1 === 'A' && r === filaK && activeMethod === 'manual') ? st.f1 : { formula: st.f1 }; }
+            if(st.l1) { ws.getCell(`${st.c1}${r}`).value = st.l1; ws.getCell(`B${r}`).value = (st.c1 === 'A' && r === filaK && ds.isGrouped && activeMethod === 'manual') ? st.f1 : { formula: st.f1 }; }
             if(st.l2) { ws.getCell(`${st.c2}${r}`).value = st.l2; ws.getCell(`D${r}`).value = { formula: st.f2 }; }
             if(st.l3) { ws.getCell(`${st.c3}${r}`).value = st.l3; ws.getCell(`F${r}`).value = { formula: st.f3 }; if(st.l3 === 'Coeficiente Variación:') ws.getCell(`F${r}`).numFmt = '0.00%'; }
             if(st.l4) { ws.getCell(`${st.c4}${r}`).value = st.l4; ws.getCell(`H${r}`).value = { formula: st.f4 }; }
@@ -70,5 +87,5 @@ export async function exportAllToExcel(globalDatasets, activeMethod) {
     });
 
     const buffer = await wb.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), 'Analisis_Lotes_Avanzado.xlsx');
+    saveAs(new Blob([buffer]), 'Analisis_Estadistico.xlsx');
 }

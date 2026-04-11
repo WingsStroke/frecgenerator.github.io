@@ -1,7 +1,6 @@
 import { AppState } from './state.js';
 import { cleanNum } from './math.js';
 
-// --- CONFIGURACIÓN DE GRÁFICOS ---
 if (typeof Chart !== 'undefined' && typeof ChartBoxPlot !== 'undefined') {
     Chart.register(ChartBoxPlot.BoxPlotController, ChartBoxPlot.BoxAndWiskers);
 }
@@ -38,7 +37,6 @@ window.openChartModal = function(dsIndex, chartType) {
 };
 window.toggleAccordion = function(header) { header.parentElement.classList.toggle('active'); };
 
-// --- RENDERIZADO HTML ---
 function createStatRow(label, value, formula) {
     return `<div class="stat-row"><span class="tooltip">${label}<span class="tooltiptext">${formula}</span></span><b>${value}</b></div>`;
 }
@@ -52,32 +50,46 @@ export function updateCarouselControls() {
 export function renderCarousel() {
     const carousel = document.getElementById('resultsCarousel');
     carousel.innerHTML = ''; AppState.currentSlide = 0;
-    let kFormula = AppState.activeMethod === 'sturges' ? 'k ≈ 1 + 3.322 · log₁₀(n)' : 'Manual';
-    let methodLabel = AppState.activeMethod === 'sturges' ? ' - Sturges' : ' - Manual';
 
     AppState.globalDatasets.forEach((ds, index) => {
         let block = document.createElement('div'); block.className = 'dataset-block';
-        // Los encabezados de la tabla MANTIENEN sus paréntesis como pediste
-        let freqHtml = `<h3>Análisis ${index + 1}: ${ds.name}</h3><table><thead><tr><th>Límite Inf. (Li)</th><th>Límite Sup. (Ls)</th><th>Marca de Clase (Xi)</th><th>Frec. Abs. (fi)</th><th>Frec. Acum. (Fi)</th><th>Frec. Rel. (hi)</th><th>Frec. Rel. Acum. (Hi)</th></tr></thead><tbody>`;
-        ds.classesData.forEach(c => { freqHtml += `<tr><td>${cleanNum(c.min)}</td><td>${cleanNum(c.max)}</td><td>${cleanNum(c.xi)}</td><td>${c.fi}</td><td>${c.Fi}</td><td>${cleanNum(c.hi)}</td><td>${cleanNum(c.Hi)}</td></tr>`; });
+        
+        let kFormula = AppState.activeMethod === 'sturges' ? 'k ≈ 1 + 3.322 · log₁₀(n)' : 'Manual';
+        let methodLabel = AppState.activeMethod === 'sturges' ? ' - Sturges' : ' - Manual';
+
+        // Renderizado Condicional de la Tabla
+        let freqHtml = `<h3>Análisis ${index + 1}: ${ds.name} <span style="font-size:13px; font-weight:normal; color:#666;">(${ds.isGrouped ? 'Datos Agrupados' : 'Frecuencias Simples'})</span></h3><table><thead><tr>`;
+        if (ds.isGrouped) {
+            freqHtml += `<th>Límite Inf. (Li)</th><th>Límite Sup. (Ls)</th><th>Marca de Clase (Xi)</th>`;
+        } else {
+            freqHtml += `<th>Dato (Xi)</th>`;
+        }
+        freqHtml += `<th>Frec. Abs. (fi)</th><th>Frec. Acum. (Fi)</th><th>Frec. Rel. (hi)</th><th>Frec. Rel. Acum. (Hi)</th></tr></thead><tbody>`;
+        
+        ds.classesData.forEach(c => { 
+            freqHtml += `<tr>`;
+            if (ds.isGrouped) {
+                freqHtml += `<td>${cleanNum(c.min)}</td><td>${cleanNum(c.max)}</td>`;
+            }
+            freqHtml += `<td>${cleanNum(c.xi)}</td><td>${c.fi}</td><td>${c.Fi}</td><td>${cleanNum(c.hi)}</td><td>${cleanNum(c.Hi)}</td></tr>`; 
+        });
         freqHtml += `</tbody></table>`;
 
-        // Se eliminan los paréntesis de los textos y se agregan las fórmulas matemáticas a Q1 y Q3
         let statsHtml = `<div class="stats-grid">
             <div class="stat-card">
                 <h3>Parámetros Base</h3>
                 ${createStatRow('Mínimo:', cleanNum(ds.minVal), 'min(xᵢ)')}
                 ${createStatRow('Máximo:', cleanNum(ds.maxVal), 'max(xᵢ)')}
-                ${createStatRow(`Intervalos k${methodLabel}:`, ds.numClasses, kFormula)}
-                ${createStatRow('Amplitud A:', cleanNum(ds.amplitude), 'A = Rango / k')}
+                ${ds.isGrouped ? createStatRow(`Intervalos k${methodLabel}:`, ds.numClasses, kFormula) : createStatRow('Valores Únicos:', ds.uniqueValsCount, 'No agrupados')}
+                ${ds.isGrouped ? createStatRow('Amplitud A:', cleanNum(ds.amplitude), 'A = Rango / k') : ''}
             </div>
             <div class="stat-card">
                 <h3>Tendencia Central</h3>
                 ${createStatRow('Media Aritmética:', cleanNum(ds.stats.mean), 'x̄ = (Σxᵢ) / n')}
                 ${createStatRow('Media Geométrica:', cleanNum(ds.stats.geoMean), 'MG = ⁿ√(x₁···xₙ)')}
                 ${createStatRow('Media Armónica:', cleanNum(ds.stats.harMean), 'MH = n / Σ(1/xᵢ)')}
-                ${createStatRow('Mediana:', cleanNum(ds.stats.median), 'Me = Lᵢ + A·[(n/2 - Fᵢ₋₁)/fᵢ]')}
-                ${createStatRow('Moda:', ds.stats.mode.map(m=>cleanNum(m)).join(','), 'Mo = Lᵢ + A·[(fᵢ - fᵢ₋₁)/(2fᵢ - fᵢ₋₁ - fᵢ₊₁)]')}
+                ${createStatRow('Mediana:', cleanNum(ds.stats.median), ds.isGrouped ? 'Me = Lᵢ + A·[(n/2 - Fᵢ₋₁)/fᵢ]' : 'Valor central')}
+                ${createStatRow('Moda:', ds.stats.mode.map(m=>cleanNum(m)).join(','), ds.isGrouped ? 'Mo = Lᵢ + A·[(fᵢ - fᵢ₋₁)/(2fᵢ - fᵢ₋₁ - fᵢ₊₁)]' : 'Valor más repetido')}
             </div>
             <div class="stat-card">
                 <h3>Dispersión y Forma</h3>
@@ -201,7 +213,7 @@ export function initUIListeners() {
 
     document.getElementById('finishRangesBtn').addEventListener('click', () => document.getElementById('previewModal').classList.add('hidden'));
 
-    // NUEVO: Procedimiento Tutor 100% Completo
+    // Procedimiento Tutor adaptado
     document.getElementById('floatingProcedureBtn').addEventListener('click', () => {
         const ds = AppState.globalDatasets[AppState.currentSlide]; 
         document.getElementById('procedureModalTitle').innerText = `Procedimiento Completo: ${ds.name}`;
@@ -209,22 +221,29 @@ export function initUIListeners() {
         let isSturges = AppState.activeMethod === 'sturges';
         let firstRow = ds.classesData[0] || {};
         
-        document.getElementById('procedureContent').innerHTML = `
+        let html = `
             <div class="procedure-step">
                 <h3>1. Parámetros Base para la Tabla</h3>
-                <div class="math-formula">Rango R = ${cleanNum(ds.maxVal)} - ${cleanNum(ds.minVal)} = <span class="math-highlight">${cleanNum(ds.range)}</span></div>
-                <div class="math-formula">Intervalos k ${isSturges ? `≈ 1 + 3.322 * log₁₀(${ds.n}) = ` : 'Manual = '} <span class="math-highlight">${ds.numClasses}</span></div>
-                <div class="math-formula">Amplitud A = ${cleanNum(ds.range)} / ${ds.numClasses} = <span class="math-highlight">${cleanNum(ds.amplitude)}</span></div>
-            </div>
+                <div class="math-formula">Rango R = ${cleanNum(ds.maxVal)} - ${cleanNum(ds.minVal)} = <span class="math-highlight">${cleanNum(ds.range)}</span></div>`;
+        
+        if (ds.isGrouped) {
+            html += `<div class="math-formula">Intervalos k ${isSturges ? `≈ 1 + 3.322 * log₁₀(${ds.n}) = ` : 'Manual = '} <span class="math-highlight">${ds.numClasses}</span></div>
+                     <div class="math-formula">Amplitud A = ${cleanNum(ds.range)} / ${ds.numClasses} = <span class="math-highlight">${cleanNum(ds.amplitude)}</span></div></div>
+                     <div class="procedure-step">
+                        <h3>2. Construcción de la Tabla (Ejemplo 1ra Fila)</h3>
+                        <div class="math-formula">Límite Inferior Li = Mínimo = <span class="math-highlight">${cleanNum(firstRow.min)}</span></div>
+                        <div class="math-formula">Límite Superior Ls = Li + A = ${cleanNum(firstRow.min)} + ${cleanNum(ds.amplitude)} = <span class="math-highlight">${cleanNum(firstRow.max)}</span></div>
+                        <div class="math-formula">Marca de Clase Xi = (Li + Ls) / 2 = <span class="math-highlight">${cleanNum(firstRow.xi)}</span></div>`;
+        } else {
+            html += `<p style="margin-top:10px;"><i>El sistema detectó solo ${ds.uniqueValsCount} valores únicos. Se ha omitido el cálculo de intervalos para generar una tabla simple.</i></p></div>
+                     <div class="procedure-step">
+                        <h3>2. Construcción de la Tabla (Ejemplo 1ra Fila)</h3>
+                        <div class="math-formula">Dato Xi = El valor único detectado = <span class="math-highlight">${cleanNum(firstRow.xi)}</span></div>`;
+        }
 
-            <div class="procedure-step">
-                <h3>2. Construcción de la Tabla (Ejemplo 1ra Fila)</h3>
-                <p>Usando la amplitud, formamos los intervalos y variables de la tabla:</p>
-                <div class="math-formula">Límite Inferior Li = Mínimo = <span class="math-highlight">${cleanNum(firstRow.min)}</span></div>
-                <div class="math-formula">Límite Superior Ls = Li + A = ${cleanNum(firstRow.min)} + ${cleanNum(ds.amplitude)} = <span class="math-highlight">${cleanNum(firstRow.max)}</span></div>
-                <div class="math-formula">Marca de Clase Xi = (Li + Ls) / 2 = <span class="math-highlight">${cleanNum(firstRow.xi)}</span></div>
-                <div class="math-formula">Frec. Absoluta fi = Recuento de datos en el intervalo = <span class="math-highlight">${firstRow.fi}</span></div>
-                <div class="math-formula">Frec. Acumulada Fi = Suma de frecuencias = <span class="math-highlight">${firstRow.Fi}</span></div>
+        html += `
+                <div class="math-formula">Frec. Absoluta fi = Recuento de veces que aparece = <span class="math-highlight">${firstRow.fi}</span></div>
+                <div class="math-formula">Frec. Acumulada Fi = Suma sucesiva de frecuencias = <span class="math-highlight">${firstRow.Fi}</span></div>
                 <div class="math-formula">Frec. Relativa hi = fi / n = ${firstRow.fi} / ${ds.n} = <span class="math-highlight">${cleanNum(firstRow.hi)}</span></div>
                 <div class="math-formula">Frec. Rel. Acumulada Hi = Fi / n = <span class="math-highlight">${cleanNum(firstRow.Hi)}</span></div>
             </div>
@@ -240,7 +259,6 @@ export function initUIListeners() {
             
             <div class="procedure-step">
                 <h3>4. Medidas de Posición</h3>
-                <p><i>Nota: Calculadas usando interpolación exacta sobre el arreglo de datos.</i></p>
                 <div class="math-formula">Percentil 10 P₁₀ = <span class="math-highlight">${cleanNum(ds.stats.p10)}</span></div>
                 <div class="math-formula">Cuartil 1 Q₁ = <span class="math-highlight">${cleanNum(ds.stats.q1)}</span></div>
                 <div class="math-formula">Cuartil 2 Q₂ (Mediana) = <span class="math-highlight">${cleanNum(ds.stats.q2)}</span></div>
@@ -256,6 +274,7 @@ export function initUIListeners() {
                 <div class="math-formula">Asimetría As = [n/((n-1)(n-2))] · Σ[(xᵢ-x̄)/s]³ = <span class="math-highlight">${cleanNum(ds.stats.skewness)}</span></div>
             </div>
         `;
+        document.getElementById('procedureContent').innerHTML = html;
         document.getElementById('procedureModal').classList.remove('hidden');
     });
     document.getElementById('closeProcedureModalBtn').addEventListener('click', () => document.getElementById('procedureModal').classList.add('hidden'));
