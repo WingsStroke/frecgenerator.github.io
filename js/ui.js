@@ -8,19 +8,6 @@ if (typeof Chart !== 'undefined' && typeof ChartBoxPlot !== 'undefined') {
 let activeModalChart = null; 
 const miniChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: true }, y: { display: true } } };
 
-let isXPressed = false;
-let isYPressed = false;
-
-window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'x') isXPressed = true;
-    if (e.key.toLowerCase() === 'y') isYPressed = true;
-});
-
-window.addEventListener('keyup', (e) => {
-    if (e.key.toLowerCase() === 'x') isXPressed = false;
-    if (e.key.toLowerCase() === 'y') isYPressed = false;
-});
-
 function getChartConfig(ds, type) {
     const labels = ds.classesData.map(c => cleanNum(c.xi));
     if (type === 'hist') return { data: { labels, datasets: [ { type: 'bar', label: 'Frecuencia fi', data: ds.classesData.map(c => c.fi), backgroundColor: 'rgba(0, 0, 0, 0.1)', borderColor: '#000', borderWidth: 1, barPercentage: 1, categoryPercentage: 1 }, { type: 'line', label: 'Polígono', data: ds.classesData.map(c => c.fi), borderColor: '#000', borderWidth: 2, tension: 0.1, fill: false, pointBackgroundColor: '#000' } ] } };
@@ -226,7 +213,7 @@ function renderPreviewTable() {
     
     const table = document.getElementById('interactiveTable');
     table.addEventListener('mousedown', (e) => {
-        if(e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved')) return; 
+        if(e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved') || e.button !== 0) return; 
         isDragging = true; const r = parseInt(e.target.dataset.r), c = parseInt(e.target.dataset.c);
         if (e.ctrlKey || e.metaKey) { e.target.classList.toggle('cell-selected'); lastClickedCell = {r, c}; startCell = null; } 
         else if (e.shiftKey && lastClickedCell) { selectRange(lastClickedCell, {r, c}, true); } 
@@ -296,17 +283,25 @@ function renderBivariateTable() {
     container.innerHTML = html + '</table>';
     
     const table = document.getElementById('interactiveBivariateTable');
+    
+    table.addEventListener('contextmenu', (e) => {
+        if (e.altKey) e.preventDefault();
+    });
+
     table.addEventListener('mousedown', (e) => {
         if(e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved-x') || e.target.classList.contains('cell-saved-y')) return; 
         
-        if (isXPressed) {
-            document.getElementById('bivariateNameX').value = e.target.innerText.trim();
+        if (e.altKey) {
+            e.preventDefault();
+            if (e.button === 0) {
+                document.getElementById('bivariateNameX').value = e.target.innerText.trim();
+            } else if (e.button === 2) {
+                document.getElementById('bivariateNameY').value = e.target.innerText.trim();
+            }
             return;
         }
-        if (isYPressed) {
-            document.getElementById('bivariateNameY').value = e.target.innerText.trim();
-            return;
-        }
+
+        if (e.button !== 0) return;
 
         isBivDragging = true; const r = parseInt(e.target.dataset.r), c = parseInt(e.target.dataset.c);
         if (e.ctrlKey || e.metaKey) { e.target.classList.toggle('cell-selected'); lastBivClickedCell = {r, c}; startBivCell = null; } 
@@ -345,6 +340,27 @@ function updateBivariateRangeCount() { document.getElementById('bivariateRangeCo
 
 
 export function initUIListeners() {
+    window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'ArrowDown') {
+            const uniModal = document.getElementById('previewModal');
+            const bivModal = document.getElementById('bivariateModal');
+            
+            if (!uniModal.classList.contains('hidden') && lastClickedCell) {
+                e.preventDefault();
+                let endCell = { r: preview2DArray.length - 1, c: lastClickedCell.c };
+                let start = startCell || lastClickedCell;
+                selectRange(start, endCell, true);
+                lastClickedCell = endCell;
+            } else if (!bivModal.classList.contains('hidden') && lastBivClickedCell) {
+                e.preventDefault();
+                let endCell = { r: bivariate2DArray.length - 1, c: lastBivClickedCell.c };
+                let start = startBivCell || lastBivClickedCell;
+                selectBivRange(start, endCell, true);
+                lastBivClickedCell = endCell;
+            }
+        }
+    });
+
     document.getElementById('prevBtn').addEventListener('click', () => { if (AppState.currentSlide > 0) { AppState.currentSlide--; document.getElementById('resultsCarousel').scrollTo({ left: document.getElementById('resultsCarousel').clientWidth * AppState.currentSlide, behavior: 'smooth' }); updateCarouselControls(); }});
     document.getElementById('nextBtn').addEventListener('click', () => { if (AppState.currentSlide < AppState.globalDatasets.length - 1) { AppState.currentSlide++; document.getElementById('resultsCarousel').scrollTo({ left: document.getElementById('resultsCarousel').clientWidth * AppState.currentSlide, behavior: 'smooth' }); updateCarouselControls(); }});
     document.getElementById('resultsCarousel').addEventListener('scroll', (e) => { const newSlide = Math.round(e.target.scrollLeft / e.target.clientWidth); if (newSlide !== AppState.currentSlide && newSlide >= 0 && newSlide < AppState.globalDatasets.length) { AppState.currentSlide = newSlide; updateCarouselControls(); }});

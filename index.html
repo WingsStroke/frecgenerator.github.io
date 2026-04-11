@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suite Estadística 2.2</title>
+    <title>Suite Estadística 2.3</title>
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
@@ -14,7 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
-    <link rel="stylesheet" href="styles.css?v=2.2.0">
+    <link rel="stylesheet" href="styles.css?v=2.3.0">
 </head>
 <body>
     <div class="container">
@@ -91,7 +91,7 @@
                 <h2 id="modalTitle">Previsualización de Excel</h2>
                 <span class="close-btn" id="closeModalBtn">&times;</span>
             </div>
-            <p><strong>Comandos:</strong> Haz clic y arrastra. Usa <b>SHIFT + Clic</b> para rangos largos.</p>
+            <p style="margin-bottom: 15px;"><strong>Comandos:</strong> Haz clic y arrastra. Usa <b>SHIFT + Clic</b> para rangos largos. Usa <b>CTRL + SHIFT + Flecha Abajo</b> para seleccionar toda la columna activa.</p>
             <div class="range-controls">
                 <button id="saveRangeBtn">Guardar Rango</button>
                 <button id="clearSelectionBtn" class="btn-secondary">Limpiar Selección Activa</button>
@@ -110,7 +110,7 @@
                 <span class="close-btn" id="closeBivariateModalBtn">&times;</span>
             </div>
             <p style="margin-bottom: 5px;">Selecciona todos los datos y luego asigna un nombre (variable). <b>Importante:</b> Ambos rangos deben tener la misma cantidad de datos seleccionados.</p>
-            <p style="font-size: 13px; color: #555; margin-top: 0; margin-bottom: 15px;"><i>Tip: Mantén presionada la tecla <b>X</b> o <b>Y</b> y haz clic en una celda para asignarla rápidamente como nombre de la variable.</i></p>
+            <p style="font-size: 13px; color: #555; margin-top: 0; margin-bottom: 15px;"><i>Tip: Mantén <b>Alt + Clic Izquierdo</b> en una celda para extraer el nombre de la variable X (Filas), o <b>Alt + Clic Derecho</b> para la variable Y (Columnas). Usa <b>CTRL + SHIFT + Flecha Abajo</b> para seleccionar la columna completa.</i></p>
             
             <div class="range-controls" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
                 <div style="border: 2px solid #0000a0; padding: 10px; background: #f0f0ff; flex: 1; min-width: 250px;">
@@ -163,6 +163,6 @@
         Ver Procedimiento
     </button>
 
-    <script type="module" src="js/main.js?v=2.2.0"></script>
+    <script type="module" src="js/main.js?v=2.3.0"></script>
 </body>
 </html>
