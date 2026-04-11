@@ -2,7 +2,7 @@ import { AppState } from './state.js';
 import { calculateStatsForDataset } from './math.js';
 import { extractNumbersFromFile, exportAllToExcel } from './excel.js';
 import { renderCarousel, openExcelModal, initUIListeners } from './ui.js';
-import { exportToPDF } from './pdf.js'; // NUEVA IMPORTACIÓN
+import { exportToPDF } from './pdf.js';
 
 initUIListeners();
 
