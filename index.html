@@ -3,47 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suite Estadística 2.3</title>
+    <title>Suite Estadística 3.0</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4.4.2/build/index.umd.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
-    <link rel="stylesheet" href="styles.css?v=2.3.0">
+    <link rel="stylesheet" href="styles.css?v=3.0.0">
 </head>
 <body>
     <div class="container">
-        <h1>Suite de Análisis Estadístico</h1>
+        <h1 class="main-title">Suite de Análisis Estadístico</h1>
         
-        <div class="controls">
-            <div class="settings-panel" style="border-color: #a00000; border-width: 2px;">
-                <h3 style="color: #a00000;">Nivel de Análisis</h3>
+        <div class="controls glass-panel">
+            <div class="settings-panel accent-panel">
+                <h3 class="accent-text">Nivel de Análisis</h3>
                 <label>
                     <input type="radio" name="analysisMode" value="univariate" checked> 
-                    <span class="tooltip" style="font-weight: bold;">Univariado (1 Variable)
+                    <span class="tooltip">Univariado (1 Variable)
                         <span class="tooltiptext">Análisis clásico de tendencia central, dispersión y posición.</span>
                     </span>
                 </label>
                 <label>
                     <input type="radio" name="analysisMode" value="bivariate"> 
-                    <span class="tooltip" style="font-weight: bold;">Bivariado (Tablas Cruzadas - 2 Variables)
+                    <span class="tooltip">Bivariado (Tablas Cruzadas - 2 Variables)
                         <span class="tooltiptext">Relaciona dos columnas seleccionadas manualmente para encontrar patrones conjuntos.</span>
                     </span>
                 </label>
             </div>
 
-            <div class="mode-selector">
+            <div class="settings-panel">
                 <h3>Modo de Importación</h3>
                 <label><input type="radio" name="uploadMode" value="file" checked> Archivos Excel</label>
                 <label><input type="radio" name="uploadMode" value="paste"> Pegar Texto Directamente</label>
             </div>
 
-            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" multiple>
+            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" multiple class="custom-file-input">
             
             <div id="fileQueue" class="file-queue hidden">
                 <h3>Archivos Cargados</h3>
@@ -64,81 +67,81 @@
                 <div class="settings-panel hidden" id="intervalSettings">
                     <h3>Configuración de Intervalos</h3>
                     <label><input type="radio" name="kMethod" value="sturges" checked> Automático (Sturges)</label>
-                    <label><input type="radio" name="kMethod" value="manual"> Definir Manualmente: <input type="number" id="kManualValue" min="1" step="1" disabled></label>
+                    <label><input type="radio" name="kMethod" value="manual"> Definir Manualmente: <input type="number" id="kManualValue" min="1" step="1" disabled class="glass-input"></label>
                 </div>
             </div>
 
             <div class="btn-group">
-                <button id="processBtn">Procesar Datos</button>
-                <button id="exportBtn" class="hidden">Descargar Excel Completo</button>
-                <button id="exportPdfBtn" class="hidden" style="background-color: #a00000; border-color: #800000;">Descargar Reporte PDF</button>
+                <button id="processBtn" class="btn-primary">Procesar Datos</button>
+                <button id="exportBtn" class="hidden btn-glass">Descargar Excel Completo</button>
+                <button id="exportPdfBtn" class="hidden btn-danger">Descargar Reporte PDF</button>
             </div>
         </div>
 
         <div id="resultsArea" class="hidden">
-            <div class="carousel-nav">
-                <button id="prevBtn">&larr; Anterior</button>
+            <div class="carousel-nav glass-panel">
+                <button id="prevBtn" class="btn-glass">&larr; Anterior</button>
                 <span id="carouselIndicator">Tabla 1 de 1</span>
-                <button id="nextBtn">Siguiente &rarr;</button>
+                <button id="nextBtn" class="btn-glass">Siguiente &rarr;</button>
             </div>
             <div id="resultsCarousel"></div>
         </div>
     </div>
 
     <div id="previewModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content glass-modal">
             <div class="modal-header">
                 <h2 id="modalTitle">Previsualización de Excel</h2>
                 <span class="close-btn" id="closeModalBtn">&times;</span>
             </div>
-            <p style="margin-bottom: 15px;"><strong>Comandos:</strong> Haz clic y arrastra. Usa <b>SHIFT + Clic</b> para rangos largos. Usa <b>CTRL + SHIFT + Flecha Abajo</b> para seleccionar toda la columna activa.</p>
-            <div class="range-controls">
-                <button id="saveRangeBtn">Guardar Rango</button>
-                <button id="clearSelectionBtn" class="btn-secondary">Limpiar Selección Activa</button>
+            <p class="modal-instructions"><strong>Comandos:</strong> Haz clic y arrastra. Usa <b>SHIFT + Clic</b> para rangos largos. Usa <b>CTRL + SHIFT + Flecha Abajo</b> para seleccionar toda la columna activa.</p>
+            <div class="range-controls glass-panel-inner">
+                <button id="saveRangeBtn" class="btn-primary">Guardar Rango</button>
+                <button id="clearSelectionBtn" class="btn-glass">Limpiar Selección Activa</button>
                 <button id="resetRangesBtn" class="btn-danger">Borrar Todos Los Rangos</button>
-                <button id="finishRangesBtn">Terminar y Cerrar</button>
-                <span id="rangeCount">Rangos guardados: 0/10</span>
+                <button id="finishRangesBtn" class="btn-primary">Terminar y Cerrar</button>
+                <span id="rangeCount" class="range-badge">Rangos guardados: 0/10</span>
             </div>
-            <div id="tableContainer"></div>
+            <div id="tableContainer" class="table-glass-container"></div>
         </div>
     </div>
 
     <div id="bivariateModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content glass-modal">
             <div class="modal-header">
                 <h2 id="bivariateModalTitle">Cruce Bivariado Interactivo</h2>
                 <span class="close-btn" id="closeBivariateModalBtn">&times;</span>
             </div>
-            <p style="margin-bottom: 5px;">Selecciona todos los datos y luego asigna un nombre (variable). <b>Importante:</b> Ambos rangos deben tener la misma cantidad de datos seleccionados.</p>
-            <p style="font-size: 13px; color: #555; margin-top: 0; margin-bottom: 15px;"><i>Tip: Mantén <b>Alt + Clic Izquierdo</b> en una celda para extraer el nombre de la variable X (Filas), o <b>Alt + Clic Derecho</b> para la variable Y (Columnas). Usa <b>CTRL + SHIFT + Flecha Abajo</b> para seleccionar la columna completa.</i></p>
+            <p class="modal-instructions">Selecciona todos los datos y luego asigna un nombre (variable). <b>Importante:</b> Ambos rangos deben tener la misma cantidad de datos seleccionados.</p>
+            <p class="modal-tip"><i>Tip: Mantén <b>Alt + Clic Izquierdo</b> en una celda para extraer el nombre de la variable X (Filas), o <b>Alt + Clic Derecho</b> para la variable Y (Columnas). Usa <b>CTRL + SHIFT + Flecha Abajo</b> para seleccionar la columna completa.</i></p>
             
-            <div class="range-controls" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
-                <div style="border: 2px solid #0000a0; padding: 10px; background: #f0f0ff; flex: 1; min-width: 250px;">
-                    <input type="text" id="bivariateNameX" placeholder="Nombre de la Variable X (Filas)" style="margin-bottom: 5px; width: 100%; padding: 5px; box-sizing: border-box;"><br>
-                    <button id="setRangeXBtn" style="background-color: #0000a0; color: #fff; width: 100%;">Asignar al Rango X</button>
-                    <div id="countX" style="font-size: 13px; font-weight: bold; margin-top: 5px;">Datos seleccionados: 0</div>
+            <div class="bivariate-grid">
+                <div class="bivariate-box box-x">
+                    <input type="text" id="bivariateNameX" placeholder="Nombre de la Variable X (Filas)" class="glass-input full-width">
+                    <button id="setRangeXBtn" class="btn-x full-width">Asignar al Rango X</button>
+                    <div id="countX" class="data-count">Datos seleccionados: 0</div>
                 </div>
                 
-                <div style="border: 2px solid #00a000; padding: 10px; background: #f0fff0; flex: 1; min-width: 250px;">
-                    <input type="text" id="bivariateNameY" placeholder="Nombre de la Variable Y (Columnas)" style="margin-bottom: 5px; width: 100%; padding: 5px; box-sizing: border-box;"><br>
-                    <button id="setRangeYBtn" style="background-color: #00a000; color: #fff; width: 100%;">Asignar al Rango Y</button>
-                    <div id="countY" style="font-size: 13px; font-weight: bold; margin-top: 5px;">Datos seleccionados: 0</div>
+                <div class="bivariate-box box-y">
+                    <input type="text" id="bivariateNameY" placeholder="Nombre de la Variable Y (Columnas)" class="glass-input full-width">
+                    <button id="setRangeYBtn" class="btn-y full-width">Asignar al Rango Y</button>
+                    <div id="countY" class="data-count">Datos seleccionados: 0</div>
                 </div>
             </div>
             
-            <div class="range-controls" style="margin-top: 15px;">
-                <button id="clearBivariateSelectionBtn" class="btn-secondary">Limpiar Selección Activa</button>
+            <div class="range-controls glass-panel-inner mt-15">
+                <button id="clearBivariateSelectionBtn" class="btn-glass">Limpiar Selección Activa</button>
                 <button id="resetBivariateBtn" class="btn-danger">Borrar Todo el Cruce</button>
-                <button id="saveBivariateBtn" style="background-color: #a00000; color: #fff; border-color: #800000;">Confirmar Cruce y Cerrar</button>
-                <span id="bivariateRangeCount" style="margin-left: 15px; font-weight: bold;">Cruces guardados: 0/10</span>
+                <button id="saveBivariateBtn" class="btn-danger">Confirmar Cruce y Cerrar</button>
+                <span id="bivariateRangeCount" class="range-badge ml-15">Cruces guardados: 0/10</span>
             </div>
             
-            <div id="bivariateTableContainer" style="flex-grow: 1; overflow: auto; border: 1px solid #000; position: relative; user-select: none;"></div>
+            <div id="bivariateTableContainer" class="table-glass-container mt-15"></div>
         </div>
     </div>
 
     <div id="chartModal" class="modal hidden">
-        <div class="modal-content" style="max-height: 85vh; height: auto;">
+        <div class="modal-content glass-modal chart-modal-size">
             <div class="modal-header">
                 <h2 id="chartModalTitle">Gráfico Estadístico</h2>
                 <span class="close-btn" id="closeChartModalBtn">&times;</span>
@@ -150,12 +153,12 @@
     </div>
 
     <div id="procedureModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content glass-modal">
             <div class="modal-header">
                 <h2 id="procedureModalTitle">Procedimiento Matemático</h2>
                 <span class="close-btn" id="closeProcedureModalBtn">&times;</span>
             </div>
-            <div id="procedureContent" class="procedure-body"></div>
+            <div id="procedureContent" class="procedure-body custom-scrollbar"></div>
         </div>
     </div>
 
@@ -163,6 +166,6 @@
         Ver Procedimiento
     </button>
 
-    <script type="module" src="js/main.js?v=2.3.0"></script>
+    <script type="module" src="js/main.js?v=3.0.0"></script>
 </body>
 </html>
