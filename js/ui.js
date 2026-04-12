@@ -25,7 +25,9 @@ function renderChartsForDataset(ds, index) {
 window.openChartModal = function(dsIndex, chartType) {
     const ds = AppState.globalDatasets[dsIndex];
     if (activeModalChart) activeModalChart.destroy();
+    
     document.getElementById('chartModal').classList.remove('hidden');
+    document.body.classList.add('no-scroll'); // Bloqueo de scroll
 
     let titleText = ""; let options = { responsive: true, maintainAspectRatio: false };
     if (chartType === 'hist') { titleText = "Histograma y Polígono"; options.scales = { y: { beginAtZero: true } }; } 
@@ -198,7 +200,9 @@ export function openExcelModal(fileId) {
         preview2DArray = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
         renderPreviewTable();
         if(fileObj.customRanges.length > 0) alert(`Este archivo ya tiene ${fileObj.customRanges.length} rango(s) guardado(s).`);
+        
         document.getElementById('previewModal').classList.remove('hidden');
+        document.body.classList.add('no-scroll'); // Bloqueo de scroll
     };
     reader.readAsArrayBuffer(fileObj.file);
 }
@@ -269,7 +273,9 @@ export function openBivariateModal(fileId) {
         const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
         bivariate2DArray = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1, defval: ""});
         renderBivariateTable();
+        
         document.getElementById('bivariateModal').classList.remove('hidden');
+        document.body.classList.add('no-scroll'); // Bloqueo de scroll
     };
     reader.readAsArrayBuffer(fileObj.file);
 }
@@ -365,8 +371,16 @@ export function initUIListeners() {
     document.getElementById('nextBtn').addEventListener('click', () => { if (AppState.currentSlide < AppState.globalDatasets.length - 1) { AppState.currentSlide++; document.getElementById('resultsCarousel').scrollTo({ left: document.getElementById('resultsCarousel').clientWidth * AppState.currentSlide, behavior: 'smooth' }); updateCarouselControls(); }});
     document.getElementById('resultsCarousel').addEventListener('scroll', (e) => { const newSlide = Math.round(e.target.scrollLeft / e.target.clientWidth); if (newSlide !== AppState.currentSlide && newSlide >= 0 && newSlide < AppState.globalDatasets.length) { AppState.currentSlide = newSlide; updateCarouselControls(); }});
     
-    document.getElementById('closeModalBtn').addEventListener('click', () => document.getElementById('previewModal').classList.add('hidden'));
-    document.getElementById('closeChartModalBtn').addEventListener('click', () => document.getElementById('chartModal').classList.add('hidden'));
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+        document.getElementById('previewModal').classList.add('hidden');
+        document.body.classList.remove('no-scroll');
+    });
+    
+    document.getElementById('closeChartModalBtn').addEventListener('click', () => {
+        document.getElementById('chartModal').classList.add('hidden');
+        document.body.classList.remove('no-scroll');
+    });
+    
     document.getElementById('clearSelectionBtn').addEventListener('click', clearSelection);
     
     document.getElementById('resetRangesBtn').addEventListener('click', () => {
@@ -382,9 +396,17 @@ export function initUIListeners() {
         if(nums.length === 0) return alert("No hay números válidos en tu selección.");
         fileObj.customRanges.push(nums); updateRangeCount();
     });
-    document.getElementById('finishRangesBtn').addEventListener('click', () => document.getElementById('previewModal').classList.add('hidden'));
+    
+    document.getElementById('finishRangesBtn').addEventListener('click', () => {
+        document.getElementById('previewModal').classList.add('hidden');
+        document.body.classList.remove('no-scroll');
+    });
 
-    document.getElementById('closeBivariateModalBtn').addEventListener('click', () => document.getElementById('bivariateModal').classList.add('hidden'));
+    document.getElementById('closeBivariateModalBtn').addEventListener('click', () => {
+        document.getElementById('bivariateModal').classList.add('hidden');
+        document.body.classList.remove('no-scroll');
+    });
+    
     document.getElementById('clearBivariateSelectionBtn').addEventListener('click', clearBivariateSelection);
     
     document.getElementById('setRangeXBtn').addEventListener('click', () => {
@@ -450,6 +472,7 @@ export function initUIListeners() {
         
         alert(`Cruce guardado exitosamente.\n\nPresiona 'Procesar Datos' para ver los resultados.`);
         document.getElementById('bivariateModal').classList.add('hidden');
+        document.body.classList.remove('no-scroll');
     });
 
     document.getElementById('floatingProcedureBtn').addEventListener('click', () => {
@@ -516,6 +539,11 @@ export function initUIListeners() {
         `;
         document.getElementById('procedureContent').innerHTML = html;
         document.getElementById('procedureModal').classList.remove('hidden');
+        document.body.classList.add('no-scroll');
     });
-    document.getElementById('closeProcedureModalBtn').addEventListener('click', () => document.getElementById('procedureModal').classList.add('hidden'));
+
+    document.getElementById('closeProcedureModalBtn').addEventListener('click', () => {
+        document.getElementById('procedureModal').classList.add('hidden');
+        document.body.classList.remove('no-scroll');
+    });
 }
