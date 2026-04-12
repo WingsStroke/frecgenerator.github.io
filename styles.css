@@ -1,28 +1,28 @@
 /* ========================================= */
-/* SUITE ESTADÍSTICA v3.2.0 - AERO GLASS UI  */
+/* SUITE ESTADÍSTICA v3.3.0 - AERO GLASS UI  */
 /* ========================================= */
 
 :root {
-    --bg-base: #f0f4f8;
+    --bg-base: #f4f7f9;
     --text-main: #111827;
     --text-muted: #4b5563;
     
-    /* Liquid Crystal / Aero Moderno */
-    --glass-bg-main: rgba(255, 255, 255, 0.25); /* Transparencia extrema */
+    /* Liquid Crystal / Aero Moderno (Gran transparencia) */
+    --glass-bg-main: rgba(255, 255, 255, 0.25); 
     --glass-bg-solid: rgba(255, 255, 255, 0.55); 
     
     /* Bordes brillantes Aero */
     --glass-border-light: rgba(255, 255, 255, 0.8);
     --glass-border-dark: rgba(255, 255, 255, 0.2);
     
-    /* SOMBRAS DE ALTO CONTRASTE (Profundas y marcadas) */
+    /* SOMBRAS DE ALTO CONTRASTE */
     --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 10px 20px -5px rgba(0, 0, 0, 0.2);
     --glass-shadow-hover: 0 35px 60px -15px rgba(0, 0, 0, 0.45), 0 15px 30px -5px rgba(0, 0, 0, 0.25);
     
-    /* Reflejos Aero internos sutiles */
+    /* Reflejos Aero internos */
     --glass-reflection: inset 0 1px 1px rgba(255, 255, 255, 0.9), inset 0 -1px 2px rgba(255, 255, 255, 0.1);
     
-    /* Acentos Monocromáticos/Funcionales */
+    /* Acentos Funcionales */
     --accent-dark: #111827;
     --accent-blue: rgba(0, 85, 255, 0.8);
     --accent-green: rgba(0, 160, 45, 0.8);
@@ -48,62 +48,64 @@ body {
     overflow-x: hidden;
 }
 
-/* --- FONDO GEOMÉTRICO ABSTRACTO (AZULES Y ROSADOS) --- */
+/* --- FONDO ORGÁNICO ABSTRACTO (BLUR ELEGANTE, CIRCULAR) --- */
 .bg-abstract {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
     z-index: -1;
     overflow: hidden;
-    background-color: #f0f4f8;
+    background-color: #ebf0f5; /* Base muy clara */
 }
 
+/* Base circular para las formas, con alto desenfoque */
 .shape {
     position: absolute;
-    filter: blur(15px); /* Desenfoque leve para mantener las formas */
-    opacity: 0.85; /* Colores vibrantes y suaves */
-    animation: float 25s ease-in-out infinite alternate;
+    filter: blur(80px); /* Blur muy fuerte para crear una "malla de color" fundida */
+    opacity: 0.75;
+    border-radius: 50%; /* Figuras estrictamente circulares / orgánicas */
+    animation: floatShape 25s infinite alternate ease-in-out;
 }
 
-/* Azul Claro Eléctrico a Azul Profundo */
+/* Azul claro / Celeste suave */
 .shape-1 {
-    width: 55vw; height: 60vh;
-    top: -10%; left: -10%;
-    background: linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%);
-    clip-path: polygon(20% 0%, 80% 10%, 100% 70%, 40% 100%, 0% 50%);
+    width: 55vw; height: 55vw;
+    top: -15%; left: -10%;
+    background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+    border-radius: 40% 60% 60% 40% / 50% 40% 60% 50%; /* Óvalo irregular orgánico */
 }
 
-/* Rosado Fuerte Vibrante a Rosado Claro */
+/* Rosado fuerte desaturado a durazno suave */
 .shape-2 {
-    width: 60vw; height: 50vh;
-    bottom: -10%; right: -5%;
-    background: linear-gradient(135deg, #FF0844 0%, #FFB199 100%);
-    clip-path: polygon(10% 20%, 90% 0%, 100% 80%, 60% 100%, 0% 70%);
+    width: 45vw; height: 45vw;
+    bottom: -10%; right: -10%;
+    background: linear-gradient(135deg, #d8a7b1 0%, #f6cbd1 100%);
+    border-radius: 60% 40% 50% 50% / 40% 60% 40% 60%;
     animation-delay: -5s;
 }
 
-/* Rosado Morado a Azul */
+/* Rosado morado a Azul medio */
 .shape-3 {
-    width: 45vw; height: 45vh;
-    top: 25%; right: 5%;
-    background: linear-gradient(135deg, #B224EF 0%, #7579FF 100%);
-    clip-path: circle(45% at 50% 50%);
-    opacity: 0.65;
+    width: 45vw; height: 45vw;
+    top: 20%; right: 10%;
+    background: linear-gradient(135deg, #b39ddb 0%, #8fa8e0 100%);
+    border-radius: 50% 50% 40% 60% / 60% 40% 60% 40%;
     animation-delay: -10s;
 }
 
-/* Rosado Suave Pastel a Lavanda */
+/* Lavanda a Azul más oscuro (baja saturación) */
 .shape-4 {
-    width: 35vw; height: 35vh;
-    bottom: 15%; left: 8%;
-    background: linear-gradient(135deg, #FBC7D4 0%, #9796F0 100%);
-    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
-    opacity: 0.75;
+    width: 40vw; height: 40vw;
+    bottom: 15%; left: 5%;
+    background: linear-gradient(135deg, #8bb0d4 0%, #e0c3fc 100%);
+    border-radius: 50%; /* Círculo perfecto fundido */
     animation-delay: -15s;
 }
 
-@keyframes float {
-    0% { transform: translateY(0) scale(1) rotate(0deg); }
-    100% { transform: translateY(30px) scale(1.05) rotate(5deg); }
+@keyframes floatShape {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    33% { transform: translate(5vw, 5vh) rotate(10deg) scale(1.05); }
+    66% { transform: translate(-5vw, 10vh) rotate(-5deg) scale(0.95); }
+    100% { transform: translate(2vw, -5vh) rotate(15deg) scale(1.1); }
 }
 
 .container { width: 100%; max-width: 1100px; position: relative; z-index: 1; }
@@ -137,10 +139,9 @@ h2, h3 { font-weight: 600; margin-top: 0; letter-spacing: -0.5px; }
     transition: var(--transition-smooth);
 }
 
-/* Modificaciones específicas para el carrusel y su padding */
 #resultsCarousel {
     display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; gap: 40px; 
-    padding: 35px 20px 20px 20px; /* Padding interior para alejar los elementos del borde */
+    padding: 35px 20px 20px 20px; 
     background: rgba(255,255,255,0.3) !important;
 }
 
@@ -254,7 +255,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-x { background: var(--accent-blue); color: #fff; border-color: rgba(255,255,255,0.3); }
 .btn-y { background: var(--accent-green); color: #fff; border-color: rgba(255,255,255,0.3); }
 
-/* Botón Flotante Aero */
 .floating-btn {
     position: fixed; bottom: 30px; right: 30px;
     background: rgba(17, 24, 39, 0.85);
@@ -290,14 +290,13 @@ tr:last-child td { border-bottom: none; }
 .carousel-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; margin-bottom: 25px;}
 #carouselIndicator { font-weight: 700; letter-spacing: 1px; color: var(--text-main); }
 
-/* Arreglo del margen/padding del título h3 y los bloques */
 .dataset-block { 
     flex: 0 0 100%; scroll-snap-align: center; 
-    padding: 0 15px; /* Evita que el contenido se pegue al borde izquierdo al scrollear */
+    padding: 0 15px; 
     box-sizing: border-box;
 }
 .dataset-block > h3 {
-    margin-left: 5px; /* Margen separado del borde */
+    margin-left: 5px; 
     margin-bottom: 20px;
     padding-bottom: 10px;
     border-bottom: 2px solid rgba(0,0,0,0.05);
@@ -383,7 +382,6 @@ tr:last-child td { border-bottom: none; }
 .table-glass-container table { width: max-content; margin: 0; box-shadow: none; border-radius: 0; background: transparent;}
 .table-glass-container td, .table-glass-container th { padding: 10px 14px; min-width: 60px; cursor: cell; border-right: 1px solid rgba(0,0,0,0.04);}
 
-/* Colores de Selección */
 .cell-selected { background-color: rgba(0,0,0,0.08) !important; font-weight: 600; }
 .cell-saved { background-color: var(--text-muted) !important; color: #fff !important; }
 .cell-saved-x { background-color: var(--accent-blue) !important; color: #fff !important; font-weight: 600; }
@@ -404,12 +402,10 @@ tr:last-child td { border-bottom: none; }
 .tooltip .tooltiptext::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: rgba(17, 24, 39, 0.9) transparent transparent transparent; }
 .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
 
-/* Utilidades */
 .hidden { display: none !important; }
 .mt-15 { margin-top: 15px; }
 .ml-15 { margin-left: 15px; }
 
-/* Custom Scrollbar Aero */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
