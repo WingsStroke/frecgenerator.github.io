@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suite Estadística 3.0</title>
+    <title>Suite Estadística</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
@@ -18,9 +18,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
-    <link rel="stylesheet" href="styles.css?v=3.0.0">
+    <link rel="stylesheet" href="styles.css?v=3.1.1">
 </head>
 <body>
+    <div class="bg-abstract">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+    </div>
+
     <div class="container">
         <h1 class="main-title">Suite de Análisis Estadístico</h1>
         
@@ -114,7 +121,7 @@
                 <span class="close-btn" id="closeBivariateModalBtn">&times;</span>
             </div>
             <p class="modal-instructions">Selecciona todos los datos y luego asigna un nombre (variable). <b>Importante:</b> Ambos rangos deben tener la misma cantidad de datos seleccionados.</p>
-            <p class="modal-tip"><i>Tip: Mantén <b>Alt + Clic Izquierdo</b> en una celda para extraer el nombre de la variable X (Filas), o <b>Alt + Clic Derecho</b> para la variable Y (Columnas). Usa <b>CTRL + SHIFT + Flecha Abajo</b> para seleccionar la columna completa.</i></p>
+            <p class="modal-tip"><i>Tip: Mantén presionada la tecla <b>Alt</b> y haz clic izquierdo en una celda para extraer el nombre de la variable X (Filas), o <b>Alt + Clic Derecho</b> para la variable Y (Columnas). Usa <b>CTRL + SHIFT + Flecha Abajo</b> para seleccionar la columna completa.</i></p>
             
             <div class="bivariate-grid">
                 <div class="bivariate-box box-x">
@@ -167,6 +174,6 @@
         Ver Procedimiento
     </button>
 
-    <script type="module" src="js/main.js?v=3.0.0"></script>
+    <script type="module" src="js/main.js?v=3.1.0"></script>
 </body>
 </html>
