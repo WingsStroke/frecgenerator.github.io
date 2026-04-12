@@ -27,7 +27,7 @@ window.openChartModal = function(dsIndex, chartType) {
     if (activeModalChart) activeModalChart.destroy();
     
     document.getElementById('chartModal').classList.remove('hidden');
-    document.body.classList.add('no-scroll'); // Bloqueo de scroll
+    document.body.classList.add('no-scroll');
 
     let titleText = ""; let options = { responsive: true, maintainAspectRatio: false };
     if (chartType === 'hist') { titleText = "Histograma y Polígono"; options.scales = { y: { beginAtZero: true } }; } 
@@ -186,7 +186,11 @@ export function renderCarousel() {
     carousel.scrollLeft = 0; updateCarouselControls();
 }
 
+// ----------------------------------------------------
+// SISTEMA DE INTERFAZ: UNIVARIADO
+// ----------------------------------------------------
 let preview2DArray = []; let isDragging = false; let startCell = null; let lastClickedCell = null; let autoScrollInterval = null;
+let mobileLongPressTimer = null; let mobileRangeStartCell = null; let isMobileSelectionMode = false;
 
 export function openExcelModal(fileId) {
     AppState.currentPreviewFileId = fileId;
@@ -202,7 +206,7 @@ export function openExcelModal(fileId) {
         if(fileObj.customRanges.length > 0) alert(`Este archivo ya tiene ${fileObj.customRanges.length} rango(s) guardado(s).`);
         
         document.getElementById('previewModal').classList.remove('hidden');
-        document.body.classList.add('no-scroll'); // Bloqueo de scroll
+        document.body.classList.add('no-scroll');
     };
     reader.readAsArrayBuffer(fileObj.file);
 }
@@ -216,6 +220,8 @@ function renderPreviewTable() {
     container.innerHTML = html + '</table>';
     
     const table = document.getElementById('interactiveTable');
+    
+    // Eventos Mouse (Escritorio)
     table.addEventListener('mousedown', (e) => {
         if(e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved') || e.button !== 0) return; 
         isDragging = true; const r = parseInt(e.target.dataset.r), c = parseInt(e.target.dataset.c);
@@ -229,6 +235,33 @@ function renderPreviewTable() {
         selectRange(startCell, {r: parseInt(e.target.dataset.r), c: parseInt(e.target.dataset.c)}, true);
     });
 
+    // Eventos Touch (Móvil - Long Press Selección)
+    table.addEventListener('touchstart', (e) => {
+        if(e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved')) return;
+        const r = parseInt(e.target.dataset.r), c = parseInt(e.target.dataset.c);
+
+        if (isMobileSelectionMode && mobileRangeStartCell) {
+            e.preventDefault(); // Evita doble selección accidental
+            selectRange(mobileRangeStartCell, {r, c}, true);
+            isMobileSelectionMode = false;
+            mobileRangeStartCell = null;
+            document.querySelectorAll('.mobile-range-start').forEach(el => el.classList.remove('mobile-range-start'));
+            return;
+        }
+
+        mobileLongPressTimer = setTimeout(() => {
+            isMobileSelectionMode = true;
+            mobileRangeStartCell = {r, c};
+            e.target.classList.add('mobile-range-start');
+            if(navigator.vibrate) navigator.vibrate(50); // Feedback táctil leve
+        }, 2000);
+    }, {passive: false});
+
+    table.addEventListener('touchend', () => clearTimeout(mobileLongPressTimer));
+    table.addEventListener('touchmove', () => clearTimeout(mobileLongPressTimer));
+    table.addEventListener('touchcancel', () => clearTimeout(mobileLongPressTimer));
+
+    // Scroll inteligente (Escritorio)
     container.addEventListener('mousemove', (e) => {
         if(!isDragging) return;
         const rect = container.getBoundingClientRect(); const buffer = 40; let dx = 0, dy = 0;
@@ -250,10 +283,19 @@ function selectRange(start, end, clearFirst) {
     }
 }
 
-function clearSelection() { document.querySelectorAll('#interactiveTable .cell-selected').forEach(td => td.classList.remove('cell-selected')); }
+function clearSelection() { 
+    document.querySelectorAll('#interactiveTable .cell-selected').forEach(td => td.classList.remove('cell-selected')); 
+    document.querySelectorAll('#interactiveTable .mobile-range-start').forEach(td => td.classList.remove('mobile-range-start'));
+    isMobileSelectionMode = false; mobileRangeStartCell = null;
+}
 export function updateRangeCount() { document.getElementById('rangeCount').innerText = `Rangos guardados: ${AppState.uploadedFilesMap.get(AppState.currentPreviewFileId).customRanges.length}/10`; }
 
+
+// ----------------------------------------------------
+// SISTEMA DE INTERFAZ: BIVARIADO
+// ----------------------------------------------------
 let bivariate2DArray = []; let isBivDragging = false; let startBivCell = null; let lastBivClickedCell = null; let bivAutoScrollInterval = null;
+let bivMobileLongPressTimer = null; let bivMobileRangeStartCell = null; let bivIsMobileSelectionMode = false;
 
 export function openBivariateModal(fileId) {
     AppState.currentPreviewFileId = fileId;
@@ -275,7 +317,7 @@ export function openBivariateModal(fileId) {
         renderBivariateTable();
         
         document.getElementById('bivariateModal').classList.remove('hidden');
-        document.body.classList.add('no-scroll'); // Bloqueo de scroll
+        document.body.classList.add('no-scroll');
     };
     reader.readAsArrayBuffer(fileObj.file);
 }
@@ -294,6 +336,7 @@ function renderBivariateTable() {
         if (e.altKey) e.preventDefault();
     });
 
+    // Eventos Mouse (Escritorio)
     table.addEventListener('mousedown', (e) => {
         if(e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved-x') || e.target.classList.contains('cell-saved-y')) return; 
         
@@ -320,6 +363,32 @@ function renderBivariateTable() {
         selectBivRange(startBivCell, {r: parseInt(e.target.dataset.r), c: parseInt(e.target.dataset.c)}, true);
     });
 
+    // Eventos Touch (Móvil - Long Press Selección)
+    table.addEventListener('touchstart', (e) => {
+        if(e.target.tagName !== 'TD' || e.target.classList.contains('cell-saved-x') || e.target.classList.contains('cell-saved-y')) return;
+        const r = parseInt(e.target.dataset.r), c = parseInt(e.target.dataset.c);
+
+        if (bivIsMobileSelectionMode && bivMobileRangeStartCell) {
+            e.preventDefault();
+            selectBivRange(bivMobileRangeStartCell, {r, c}, true);
+            bivIsMobileSelectionMode = false;
+            bivMobileRangeStartCell = null;
+            document.querySelectorAll('.mobile-range-start').forEach(el => el.classList.remove('mobile-range-start'));
+            return;
+        }
+
+        bivMobileLongPressTimer = setTimeout(() => {
+            bivIsMobileSelectionMode = true;
+            bivMobileRangeStartCell = {r, c};
+            e.target.classList.add('mobile-range-start');
+            if(navigator.vibrate) navigator.vibrate(50);
+        }, 2000);
+    }, {passive: false});
+
+    table.addEventListener('touchend', () => clearTimeout(bivMobileLongPressTimer));
+    table.addEventListener('touchmove', () => clearTimeout(bivMobileLongPressTimer));
+    table.addEventListener('touchcancel', () => clearTimeout(bivMobileLongPressTimer));
+
     container.addEventListener('mousemove', (e) => {
         if(!isBivDragging) return;
         const rect = container.getBoundingClientRect(); const buffer = 40; let dx = 0, dy = 0;
@@ -341,7 +410,11 @@ function selectBivRange(start, end, clearFirst) {
     }
 }
 
-function clearBivariateSelection() { document.querySelectorAll('#interactiveBivariateTable .cell-selected').forEach(td => td.classList.remove('cell-selected')); }
+function clearBivariateSelection() { 
+    document.querySelectorAll('#interactiveBivariateTable .cell-selected').forEach(td => td.classList.remove('cell-selected')); 
+    document.querySelectorAll('#interactiveBivariateTable .mobile-range-start').forEach(td => td.classList.remove('mobile-range-start'));
+    bivIsMobileSelectionMode = false; bivMobileRangeStartCell = null;
+}
 function updateBivariateRangeCount() { document.getElementById('bivariateRangeCount').innerText = `Cruces guardados: ${AppState.uploadedFilesMap.get(AppState.currentPreviewFileId).customRanges.length}/10`; }
 
 
@@ -374,6 +447,7 @@ export function initUIListeners() {
     document.getElementById('closeModalBtn').addEventListener('click', () => {
         document.getElementById('previewModal').classList.add('hidden');
         document.body.classList.remove('no-scroll');
+        clearSelection();
     });
     
     document.getElementById('closeChartModalBtn').addEventListener('click', () => {
@@ -405,6 +479,7 @@ export function initUIListeners() {
     document.getElementById('closeBivariateModalBtn').addEventListener('click', () => {
         document.getElementById('bivariateModal').classList.add('hidden');
         document.body.classList.remove('no-scroll');
+        clearBivariateSelection();
     });
     
     document.getElementById('clearBivariateSelectionBtn').addEventListener('click', clearBivariateSelection);
